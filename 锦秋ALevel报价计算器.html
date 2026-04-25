@@ -1,0 +1,766 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>锦秋A-Level报价计算器</title>
+<style>
+:root {
+  --ink: #1a0a00; --gold: #d04800; --cream: #fff4f0;
+  --paper: #ffe8de; --border: #e8a882; --muted: #8a5a42;
+  --green: #276749; --red: #c0392b;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: "PingFang SC","Microsoft YaHei",sans-serif; background: var(--cream); color: var(--ink); padding-bottom: 40px; }
+header { background: linear-gradient(135deg, #a82d00 0%, #d04800 60%, #e07030 100%); color: white; padding: 16px 20px; }
+header h1 { font-size: 15px; font-weight: 600; letter-spacing: 1px; }
+header p { font-size: 11px; opacity: 0.5; margin-top: 3px; }
+main { max-width: 560px; margin: 0 auto; padding: 16px; }
+
+.mode-tabs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
+.mode-tab { padding: 14px 10px; border: 2px solid var(--border); border-radius: 6px; cursor: pointer; text-align: center; background: white; transition: all 0.15s; }
+.mode-tab.active { background: #d04800; color: white; border-color: #d04800; }
+.mode-tab .mt-title { font-size: 14px; font-weight: 700; }
+.mode-tab .mt-sub { font-size: 11px; opacity: 0.7; margin-top: 3px; }
+
+.card { background: white; border: 1px solid var(--border); border-radius: 6px; margin-bottom: 14px; overflow: hidden; }
+.card-head { background: var(--paper); padding: 10px 14px; font-size: 12px; font-weight: 600; color: var(--muted); letter-spacing: 1px; border-bottom: 1px solid var(--border); }
+.card-body { padding: 14px; }
+
+.opts { display: grid; gap: 8px; }
+.opts.cols2 { grid-template-columns: 1fr 1fr; }
+.opts.cols3 { grid-template-columns: 1fr 1fr 1fr; }
+.opt { padding: 10px 8px; border: 1.5px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 13px; text-align: center; background: white; transition: all 0.15s; line-height: 1.4; }
+.opt:hover { border-color: var(--gold); }
+.opt.selected { background: var(--gold); color: white; border-color: var(--gold); font-weight: 600; }
+.opt small { display: block; font-size: 10px; opacity: 0.8; margin-top: 2px; }
+
+.pkg-grid { display: grid; gap: 10px; }
+.pkg-card { border: 2px solid var(--border); border-radius: 6px; padding: 14px; cursor: pointer; transition: all 0.15s; background: white; }
+.pkg-card:hover { border-color: var(--gold); }
+.pkg-card.selected { border-color: var(--gold); background: #fffbf0; }
+.pkg-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+.pkg-name { font-size: 14px; font-weight: 700; }
+.pkg-price { font-size: 18px; font-weight: 800; color: var(--red); }
+.pkg-discount { font-size: 11px; color: var(--muted); margin-top: 2px; }
+.pkg-desc { font-size: 12px; color: var(--muted); line-height: 1.7; }
+.pkg-tag { display: inline-block; background: var(--paper); border: 1px solid var(--border); padding: 1px 7px; border-radius: 2px; font-size: 11px; margin-right: 4px; margin-top: 4px; }
+
+.inp-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 10px; }
+.inp-row label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 4px; }
+input[type=number], select { border: 1.5px solid var(--border); border-radius: 4px; padding: 8px 10px; font-size: 13px; font-family: inherit; background: white; color: var(--ink); outline: none; }
+input[type=number]:focus { border-color: var(--ink); }
+input[type=number].sm { width: 86px; }
+input[type=number].md { width: 110px; }
+
+/* 补充课程 */
+.supp-item { border: 1px solid var(--border); border-radius: 4px; padding: 12px; margin-bottom: 8px; }
+.supp-head { display: flex; justify-content: space-between; align-items: center; cursor: pointer; }
+.supp-title { font-size: 13px; font-weight: 600; }
+.supp-price-hint { font-size: 11px; color: var(--muted); }
+.toggle-btn { font-size: 18px; color: var(--muted); line-height: 1; border: none; background: none; cursor: pointer; padding: 0 4px; }
+.supp-body { margin-top: 10px; display: none; }
+.supp-body.open { display: block; }
+.supp-row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 13px; margin-bottom: 8px; }
+.supp-row label { font-size: 11px; color: var(--muted); display: block; margin-bottom: 3px; }
+.supp-total { text-align: right; font-size: 12px; color: var(--muted); margin-top: 4px; }
+.supp-total span { font-weight: 600; color: var(--ink); }
+
+.note { background: #fffbf0; border-left: 3px solid var(--gold); padding: 10px 12px; font-size: 12px; color: var(--muted); line-height: 1.7; border-radius: 0 4px 4px 0; margin-top: 10px; }
+.section-title { font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.5px; }
+
+.btn-calc { width: 100%; padding: 13px; background: #d04800; color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 1px; margin-bottom: 14px; }
+.btn-calc:hover { background: #a82d00; }
+
+.result-wrap { padding: 16px 14px; }
+.result-final { font-size: 28px; font-weight: 800; color: var(--red); }
+.result-orig { font-size: 13px; color: var(--muted); text-decoration: line-through; }
+.result-saved { font-size: 12px; color: var(--green); margin-top: 2px; }
+.result-main { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
+.breakdown { border-top: 1px solid var(--border); padding-top: 10px; }
+.br-row { display: flex; justify-content: space-between; font-size: 13px; padding: 5px 0; border-bottom: 1px dashed #f0ece0; }
+.br-row:last-child { border-bottom: none; }
+.br-row.total-row { border-top: 1px solid var(--border); border-bottom: none; margin-top: 4px; padding-top: 8px; font-weight: 700; font-size: 14px; }
+.br-label { color: var(--muted); }
+.br-val { font-weight: 600; }
+.btn-copy { width: 100%; padding: 13px; background: var(--gold); color: white; border: none; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; letter-spacing: 1px; margin-top: 12px; }
+.btn-copy:hover { opacity: 0.85; }
+.btn-reset { width: 100%; padding: 9px; background: white; color: var(--muted); border: 1px solid var(--border); border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 8px; }
+.placeholder { color: var(--muted); font-size: 13px; text-align: center; padding: 24px 0; }
+.hidden { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>锦秋A-Level · 报价计算器</h1>
+  <p>JINQIU A-LEVEL · QUOTATION CALCULATOR</p>
+</header>
+<main>
+
+<!-- 模式 -->
+<div class="mode-tabs">
+  <div class="mode-tab active" id="tab-pkg" onclick="switchMode('pkg')">
+    <div class="mt-title">📦 固定套餐</div>
+    <div class="mt-sub">加油包 / 互补计划</div>
+  </div>
+  <div class="mode-tab" id="tab-custom" onclick="switchMode('custom')">
+    <div class="mt-title">🔧 定制课时</div>
+    <div class="mt-sub">1对1 / 一站式 / 其他班型</div>
+  </div>
+</div>
+
+<!-- ══ 固定套餐 ══ -->
+<div id="mode-pkg">
+  <div class="card">
+    <div class="card-head">① 套餐类型</div>
+    <div class="card-body">
+      <div class="opts cols3" id="grp-pkgtype">
+        <div class="opt" data-g="pkgtype" data-v="加油包">A-Level 加油包<small>单门查漏/完整学习</small></div>
+        <div class="opt" data-g="pkgtype" data-v="互补计划">A-Level 互补计划<small>雅思+A-Level组合</small></div>
+        <div class="opt" data-g="pkgtype" data-v="IG">Pre-IG / IG 套餐<small>初中国际课程</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 加油包 -->
+  <div id="section-jiayou" class="hidden">
+    <div class="card">
+      <div class="card-head">② 选择加油包</div>
+      <div class="card-body">
+        <div class="pkg-grid">
+          <div class="pkg-card" onclick="selectPkg(this,'加油包A',35800,40800,'60h',5000,0.87)">
+            <div class="pkg-top"><div><div class="pkg-name">加油包 A</div><div class="pkg-discount">87折 · 原价40,800元</div></div><div class="pkg-price">35,800元</div></div>
+            <div class="pkg-desc">A-Level 1对1 · 60小时</div>
+            <div><span class="pkg-tag">单门查漏补缺</span></div>
+          </div>
+          <div class="pkg-card" onclick="selectPkg(this,'加油包B',56800,68000,'100h',8000,0.83)">
+            <div class="pkg-top"><div><div class="pkg-name">加油包 B</div><div class="pkg-discount">83折 · 原价68,000元</div></div><div class="pkg-price">56,800元</div></div>
+            <div class="pkg-desc">A-Level 1对1 · 100小时</div>
+            <div><span class="pkg-tag">1门完整</span><span class="pkg-tag">2-3门查漏</span></div>
+          </div>
+          <div class="pkg-card" onclick="selectPkg(this,'加油包C',97800,122400,'180h',8000,0.80)">
+            <div class="pkg-top"><div><div class="pkg-name">加油包 C</div><div class="pkg-discount">8折 · 原价122,400元</div></div><div class="pkg-price">97,800元</div></div>
+            <div class="pkg-desc">A-Level 1对1 · 180小时</div>
+            <div><span class="pkg-tag">2门完整</span><span class="pkg-tag">3-4门查漏</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">③ 非常规科目补费（选填）</div>
+      <div class="card-body">
+        <div class="note" style="margin-top:0;margin-bottom:12px">常规科目：数学、进阶数学、物理、化学、经济。历史/计算机/社会学等为非常规科目，按以下方案补费。</div>
+        <div class="section-title">方案一：按门收费（适合课时多的情况）</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <input type="number" class="sm" id="jy-doors" value="0" min="0" max="10" oninput="updateSuppTotals()">
+          <span style="font-size:13px">门</span>
+          <span style="font-size:12px;color:var(--muted)" id="jy-door-hint">A包5,000元/门</span>
+        </div>
+        <div class="section-title">方案二：按课时补差价（适合课时少的情况）</div>
+        <div class="note" style="margin-bottom:10px">非常规科目时薪从680元涨到780元，每小时多100元。填写该部分的非常规科目课时数即可。</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="number" class="sm" id="jy-extra-h" value="0" min="0" max="500" oninput="updateSuppTotals()">
+          <span style="font-size:13px">小时（×100元差价）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 互补计划 -->
+  <div id="section-hubu" class="hidden">
+    <div class="card">
+      <div class="card-head">② 选择互补计划</div>
+      <div class="card-body">
+        <div class="pkg-grid">
+          <div class="pkg-card" onclick="selectPkg(this,'互补计划A',65800,79200,'雅思40h+AL80h',5000,0.83)">
+            <div class="pkg-top"><div><div class="pkg-name">互补计划 A</div><div class="pkg-discount">83折 · 原价79,200元</div></div><div class="pkg-price">65,800元</div></div>
+            <div class="pkg-desc">雅思1对1 · 40h ＋ A-Level 1对1 · 80h</div>
+            <div><span class="pkg-tag">A2阶段在读</span></div>
+          </div>
+          <div class="pkg-card" onclick="selectPkg(this,'互补计划B',105000,131200,'雅思80h+AL120h',8000,0.80)">
+            <div class="pkg-top"><div><div class="pkg-name">互补计划 B</div><div class="pkg-discount">8折 · 原价131,200元</div></div><div class="pkg-price">105,000元</div></div>
+            <div class="pkg-desc">雅思1对1 · 80h ＋ A-Level 1对1 · 120h</div>
+            <div><span class="pkg-tag">AS阶段在读</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-head">③ 非常规科目补费（选填）</div>
+      <div class="card-body">
+        <div class="note" style="margin-top:0;margin-bottom:12px">常规科目：数学、进阶数学、物理、化学、经济。历史/计算机/社会学等为非常规科目，按以下方案补费。</div>
+        <div class="section-title">方案一：按门收费（适合课时多的情况）</div>
+        <div style="display:flex;gap:10px;align-items:center;margin-bottom:10px;flex-wrap:wrap">
+          <input type="number" class="sm" id="hb-doors" value="0" min="0" max="10" oninput="updateSuppTotals()">
+          <span style="font-size:13px">门</span>
+          <span style="font-size:12px;color:var(--muted)" id="hb-door-hint">A计划5,000元/门</span>
+        </div>
+        <div class="section-title">方案二：按课时补差价（适合课时少的情况）</div>
+        <div class="note" style="margin-bottom:10px">非常规科目时薪从680元涨到780元，每小时多100元。填写该部分的非常规科目课时数即可。</div>
+        <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+          <input type="number" class="sm" id="hb-extra-h" value="0" min="0" max="500" oninput="updateSuppTotals()">
+          <span style="font-size:13px">小时（×100元差价）</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Pre-IG / IG 套餐 -->
+<div id="section-ig" class="hidden">
+  <div class="card">
+    <div class="card-head">② 选择套餐</div>
+    <div class="card-body">
+      <div class="section-title" style="margin-bottom:10px">Pre-IG 赋能包</div>
+      <div class="pkg-grid" style="margin-bottom:14px">
+        <div class="pkg-card" onclick="selectPkg(this,'Pre-IG赋能包A（含学术伴读）',36000,36000,'Grade 7',0,1)">
+          <div class="pkg-top"><div><div class="pkg-name">Pre-IG 赋能包 A · 打包价</div><div class="pkg-discount">含学术伴读18h</div></div><div class="pkg-price">36,000元</div></div>
+          <div class="pkg-desc">数学15h · 物理15h · 化学10.5h · 生物19.5h · 学术伴读18h</div>
+          <div><span class="pkg-tag">Grade 7</span></div>
+        </div>
+        <div class="pkg-card" onclick="selectPkg(this,'Pre-IG赋能包A（纯课时包）',30000,34800,'Grade 7 · 60h',0,1)">
+          <div class="pkg-top"><div><div class="pkg-name">Pre-IG 赋能包 A · 课时包</div><div class="pkg-discount">原价34,800元（60h×580元）</div></div><div class="pkg-price">30,000元</div></div>
+          <div class="pkg-desc">数学15h · 物理15h · 化学10.5h · 生物19.5h</div>
+          <div><span class="pkg-tag">Grade 7</span></div>
+        </div>
+        <div class="pkg-card" onclick="selectPkg(this,'Pre-IG赋能包B（含学术伴读）',53000,53000,'Grade 8',0,1)">
+          <div class="pkg-top"><div><div class="pkg-name">Pre-IG 赋能包 B · 打包价</div><div class="pkg-discount">含学术伴读27h</div></div><div class="pkg-price">53,000元</div></div>
+          <div class="pkg-desc">数学22.5h · 物理22.5h · 化学18h · 生物27h · 学术伴读27h</div>
+          <div><span class="pkg-tag">Grade 8</span></div>
+        </div>
+        <div class="pkg-card" onclick="selectPkg(this,'Pre-IG赋能包B（纯课时包）',43000,52200,'Grade 8 · 90h',0,1)">
+          <div class="pkg-top"><div><div class="pkg-name">Pre-IG 赋能包 B · 课时包</div><div class="pkg-discount">原价52,200元（90h×580元）</div></div><div class="pkg-price">43,000元</div></div>
+          <div class="pkg-desc">数学22.5h · 物理22.5h · 化学18h · 生物27h</div>
+          <div><span class="pkg-tag">Grade 8</span></div>
+        </div>
+      </div>
+      <div class="section-title" style="margin-bottom:10px">IG 加油包（1对1，580元/h）</div>
+      <div class="pkg-grid">
+        <div class="pkg-card" onclick="selectPkg(this,'IG加油包A',30000,34800,'60h',0,0.86)">
+          <div class="pkg-top"><div><div class="pkg-name">IG 加油包 A</div><div class="pkg-discount">86折 · 原价34,800元</div></div><div class="pkg-price">30,000元</div></div>
+          <div class="pkg-desc">IG 1对1 · 60小时</div>
+          <div><span class="pkg-tag">单门查漏补缺</span></div>
+        </div>
+        <div class="pkg-card" onclick="selectPkg(this,'IG加油包B',48000,58000,'100h',0,0.83)">
+          <div class="pkg-top"><div><div class="pkg-name">IG 加油包 B</div><div class="pkg-discount">83折 · 原价58,000元</div></div><div class="pkg-price">48,000元</div></div>
+          <div class="pkg-desc">IG 1对1 · 100小时</div>
+          <div><span class="pkg-tag">1门完整</span><span class="pkg-tag">2-3门查漏</span></div>
+        </div>
+        <div class="pkg-card" onclick="selectPkg(this,'IG加油包C',83000,104400,'180h',0,0.80)">
+          <div class="pkg-top"><div><div class="pkg-name">IG 加油包 C</div><div class="pkg-discount">8折 · 原价104,400元</div></div><div class="pkg-price">83,000元</div></div>
+          <div class="pkg-desc">IG 1对1 · 180小时</div>
+          <div><span class="pkg-tag">2门完整</span><span class="pkg-tag">3-4门查漏</span></div>
+        </div>
+      </div>
+      <div class="note" style="margin-top:10px">IG单价580元/小时，自2026年3月起执行。Pre-IG与IG课时不可同等比例互换。</div>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<!-- ══ 定制课时 ══ -->
+<div id="mode-custom" class="hidden">
+  <div class="card">
+    <div class="card-head">① 选择班型</div>
+    <div class="card-body">
+      <div class="opts cols2" id="grp-classtype">
+        <div class="opt" data-g="classtype" data-v="AL1对1">A-Level 1对1<small>680元/小时</small></div>
+        <div class="opt" data-g="classtype" data-v="IG1对1">IG 1对1<small>580元/小时</small></div>
+        <div class="opt" data-g="classtype" data-v="一站式">一站式<small>班课150h + 1对1</small></div>
+        <div class="opt" data-g="classtype" data-v="AL1对2">AL 1对2<small>520元/小时</small></div>
+        <div class="opt" data-g="classtype" data-v="AL1对3">AL 1对3<small>460元/小时</small></div>
+        <div class="opt" data-g="classtype" data-v="AL3-6人班">AL 3-6人班<small>420元/小时</small></div>
+        <div class="opt" data-g="classtype" data-v="IG1对2">IG 1对2<small>500元/小时</small></div>
+        <div class="opt" data-g="classtype" data-v="IG1对3">IG 1对3<small>440元/小时</small></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 1对1定制 -->
+  <div id="section-11" class="hidden">
+    <div class="card">
+      <div class="card-head">② A-Level 1对1 课时配置</div>
+      <div class="card-body">
+        <div class="inp-row">
+          <div><label>课时数（小时）</label><input type="number" class="md" id="c11-hours" value="60" min="1" max="2000" step="5" oninput="updateSuppTotals()"></div>
+          <div><label>折扣 %</label><input type="number" class="sm" id="c11-disc" value="80" min="70" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="note">680元/小时原价。折扣规则参考：低于100h最低8折；100-150h最低78折；高于150h最低75折。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 一站式 -->
+  <div id="section-yzs" class="hidden">
+    <div class="card">
+      <div class="card-head">② 一站式课时配置</div>
+      <div class="card-body">
+        <div class="note" style="margin-top:0;margin-bottom:14px">必须搭配150小时班课售卖。班课原价63,000元，最低75折（不低于48,000元）。1对1原价680元/小时。</div>
+        <div class="inp-row">
+          <div><label>班课折扣 %（最低75）</label><input type="number" class="sm" id="yzs-cd" value="75" min="75" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+          <div><label>1对1 小时数</label><input type="number" class="md" id="yzs-h" value="100" min="0" max="2000" step="10" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="note">200-400总课时最低75折；400小时以上最低73折。</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 普通班型 -->
+  <div id="section-norm" class="hidden">
+    <div class="card">
+      <div class="card-head" id="norm-head">② 课时与折扣</div>
+      <div class="card-body">
+        <div class="inp-row">
+          <div><label>课时数（小时）</label><input type="number" class="md" id="norm-h" value="60" min="1" max="2000" step="5" oninput="updateSuppTotals()"></div>
+          <div><label>折扣 %</label><input type="number" class="sm" id="norm-d" value="80" min="70" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="note" id="norm-hint"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══ 补充课程（两个模式共用） ══ -->
+<div class="card">
+  <div class="card-head">补充课程（基础不够可叠加，选填）</div>
+  <div class="card-body">
+
+    <!-- 雅思1对1 -->
+    <div class="supp-item">
+      <div class="supp-head" onclick="toggleSupp('s-ielts11')">
+        <div><div class="supp-title">雅思 1对1</div><div class="supp-price-hint">620元/小时</div></div>
+        <button class="toggle-btn" id="btn-s-ielts11">＋</button>
+      </div>
+      <div class="supp-body" id="s-ielts11">
+        <div class="inp-row">
+          <div><label>小时数</label><input type="number" class="sm" id="si11-h" value="20" min="1" max="500" oninput="updateSuppTotals()"></div>
+          <div><label>折扣 %</label><input type="number" class="sm" id="si11-d" value="100" min="70" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="supp-total">小计：<span id="si11-total">¥12,400</span></div>
+      </div>
+    </div>
+
+    <!-- 雅思1对2 -->
+    <div class="supp-item">
+      <div class="supp-head" onclick="toggleSupp('s-ielts12')">
+        <div><div class="supp-title">雅思 1对2</div><div class="supp-price-hint">400元/小时</div></div>
+        <button class="toggle-btn" id="btn-s-ielts12">＋</button>
+      </div>
+      <div class="supp-body" id="s-ielts12">
+        <div class="inp-row">
+          <div><label>小时数</label><input type="number" class="sm" id="si12-h" value="20" min="1" max="500" oninput="updateSuppTotals()"></div>
+          <div><label>折扣 %</label><input type="number" class="sm" id="si12-d" value="100" min="70" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="supp-total">小计：<span id="si12-total">¥8,000</span></div>
+      </div>
+    </div>
+
+    <!-- 雅思班课 -->
+    <div class="supp-item">
+      <div class="supp-head" onclick="toggleSupp('s-ieltsclass')">
+        <div><div class="supp-title">雅思班课</div><div class="supp-price-hint">B/C段12,800元 · D段6,600元</div></div>
+        <button class="toggle-btn" id="btn-s-ieltsclass">＋</button>
+      </div>
+      <div class="supp-body" id="s-ieltsclass">
+        <div style="margin-bottom:8px">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">选择段次（可多选）</label>
+          <div class="opts cols3" id="grp-ieltsclass">
+            <div class="opt" data-g="ieltsclass" data-v="B段" data-price="12800" onclick="toggleClassOpt(this)">B段精讲<small>12,800元</small></div>
+            <div class="opt" data-g="ieltsclass" data-v="C段" data-price="12800" onclick="toggleClassOpt(this)">C段强化<small>12,800元</small></div>
+            <div class="opt" data-g="ieltsclass" data-v="D段" data-price="6600" onclick="toggleClassOpt(this)">D段冲刺<small>6,600元</small></div>
+          </div>
+        </div>
+        <div class="inp-row" style="margin-top:8px;margin-bottom:0">
+          <div><label>折扣 %</label><input type="number" class="sm" id="sic-d" value="100" min="70" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="supp-total">小计：<span id="sic-total">—</span></div>
+      </div>
+    </div>
+
+    <!-- 留学预备1对1 -->
+    <div class="supp-item">
+      <div class="supp-head" onclick="toggleSupp('s-lx11')">
+        <div><div class="supp-title">留学预备 1对1</div><div class="supp-price-hint">450元/小时</div></div>
+        <button class="toggle-btn" id="btn-s-lx11">＋</button>
+      </div>
+      <div class="supp-body" id="s-lx11">
+        <div class="inp-row">
+          <div><label>小时数</label><input type="number" class="sm" id="slx11-h" value="20" min="1" max="500" oninput="updateSuppTotals()"></div>
+          <div><label>折扣 %</label><input type="number" class="sm" id="slx11-d" value="100" min="70" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="supp-total">小计：<span id="slx11-total">¥9,000</span></div>
+      </div>
+    </div>
+
+    <!-- 留学预备1对2 -->
+    <div class="supp-item">
+      <div class="supp-head" onclick="toggleSupp('s-lx12')">
+        <div><div class="supp-title">留学预备 1对2</div><div class="supp-price-hint">300元/小时</div></div>
+        <button class="toggle-btn" id="btn-s-lx12">＋</button>
+      </div>
+      <div class="supp-body" id="s-lx12">
+        <div class="inp-row">
+          <div><label>小时数</label><input type="number" class="sm" id="slx12-h" value="20" min="1" max="500" oninput="updateSuppTotals()"></div>
+          <div><label>折扣 %</label><input type="number" class="sm" id="slx12-d" value="100" min="70" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="supp-total">小计：<span id="slx12-total">¥6,000</span></div>
+      </div>
+    </div>
+
+    <!-- 留学预备班课 -->
+    <div class="supp-item">
+      <div class="supp-head" onclick="toggleSupp('s-lxclass')">
+        <div><div class="supp-title">留学预备班课</div><div class="supp-price-hint">二级/三级各10,500元</div></div>
+        <button class="toggle-btn" id="btn-s-lxclass">＋</button>
+      </div>
+      <div class="supp-body" id="s-lxclass">
+        <div style="margin-bottom:8px">
+          <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">选择级别（可多选）</label>
+          <div class="opts cols2" id="grp-lxclass">
+            <div class="opt" data-g="lxclass" data-v="二级" data-price="10500" onclick="toggleClassOpt(this)">留学预备二级<small>10,500元</small></div>
+            <div class="opt" data-g="lxclass" data-v="三级" data-price="10500" onclick="toggleClassOpt(this)">留学预备三级<small>10,500元</small></div>
+          </div>
+        </div>
+        <div class="inp-row" style="margin-top:8px;margin-bottom:0">
+          <div><label>折扣 %</label><input type="number" class="sm" id="slc-d" value="100" min="70" max="100" step="0.5" oninput="updateSuppTotals()"></div>
+        </div>
+        <div class="supp-total">小计：<span id="slc-total">—</span></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<button class="btn-calc" onclick="calculate()">计算报价 →</button>
+
+<!-- 结果 -->
+<div class="card" id="result-card">
+  <div class="card-head">报价结果</div>
+  <div id="result-body"><div class="placeholder">请完成以上选择后点击计算</div></div>
+</div>
+
+</main>
+<script>
+let currentMode = 'pkg';
+let pkgs = [];
+let selectedClassType = '';
+let ieltsClassPrice = 0;
+let lxClassPrice = 0;
+
+function switchMode(mode) {
+  currentMode = mode;
+  document.getElementById('tab-pkg').classList.toggle('active', mode==='pkg');
+  document.getElementById('tab-custom').classList.toggle('active', mode==='custom');
+  document.getElementById('mode-pkg').classList.toggle('hidden', mode!=='pkg');
+  document.getElementById('mode-custom').classList.toggle('hidden', mode!=='custom');
+  if (mode === 'custom') {
+    ['section-jiayou','section-hubu','section-ig'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.querySelectorAll('[data-g="pkgtype"]').forEach(o => o.classList.remove('selected'));
+    pkgs = [];
+  }
+  if (mode === 'pkg') {
+    ['section-11','section-yzs','section-norm'].forEach(id => document.getElementById(id).classList.add('hidden'));
+    document.querySelectorAll('[data-g="classtype"]').forEach(o => o.classList.remove('selected'));
+    selectedClassType = '';
+  }
+  clearResult();
+}
+
+// pkg type
+document.querySelectorAll('[data-g="pkgtype"]').forEach(el => el.addEventListener('click', () => {
+  document.querySelectorAll('[data-g="pkgtype"]').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  const v = el.dataset.v;
+  document.getElementById('section-jiayou').classList.toggle('hidden', v!=='加油包');
+  document.getElementById('section-hubu').classList.toggle('hidden', v!=='互补计划');
+  document.getElementById('section-ig').classList.toggle('hidden', v!=='IG');
+  pkgs = [];
+  clearResult();
+}));
+
+function selectPkg(el, name, price, orig, hours, doorRate, discRate) {
+  const idx = pkgs.findIndex(p => p.name === name);
+  if (idx >= 0) {
+    pkgs.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    pkgs.push({ name, price, orig, hours, doorRate, discRate });
+    el.classList.add('selected');
+  }
+  // 更新门费提示：取已选套餐中最高的 doorRate
+  const maxDoor = pkgs.reduce((m, p) => Math.max(m, p.doorRate), 0);
+  if (document.getElementById('jy-door-hint')) document.getElementById('jy-door-hint').textContent = maxDoor >= 8000 ? 'B/C包8,000元/门' : maxDoor === 5000 ? 'A包5,000元/门' : '—';
+  if (document.getElementById('hb-door-hint')) document.getElementById('hb-door-hint').textContent = maxDoor >= 8000 ? 'B计划8,000元/门' : maxDoor === 5000 ? 'A计划5,000元/门' : '—';
+  clearResult();
+}
+
+// class type
+document.querySelectorAll('[data-g="classtype"]').forEach(el => el.addEventListener('click', () => {
+  document.querySelectorAll('[data-g="classtype"]').forEach(o => o.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedClassType = el.dataset.v;
+  document.getElementById('section-11').classList.toggle('hidden', !['AL1对1','IG1对1'].includes(selectedClassType));
+  document.getElementById('section-yzs').classList.toggle('hidden', selectedClassType!=='一站式');
+  const isNorm = ['AL1对2','AL1对3','IG1对2','IG1对3','AL3-6人班'].includes(selectedClassType);
+  document.getElementById('section-norm').classList.toggle('hidden', !isNorm);
+  if (selectedClassType === 'AL1对1') {
+    document.getElementById('section-11').querySelector('.card-head').textContent = '② A-Level 1对1 课时配置';
+    document.getElementById('section-11').querySelector('.note').textContent = '680元/小时原价。折扣规则参考：低于100h最低8折；100-150h最低78折；高于150h最低75折。';
+  } else if (selectedClassType === 'IG1对1') {
+    document.getElementById('section-11').querySelector('.card-head').textContent = '② IG 1对1 课时配置';
+    document.getElementById('section-11').querySelector('.note').textContent = '580元/小时原价（2026年3月起）。折扣规则参考：低于100h最低8折；100-150h最低78折；高于150h最低75折。';
+  }
+  if (isNorm) {
+    const rates = {'AL1对2':520,'AL1对3':460,'IG1对2':500,'IG1对3':440,'AL3-6人班':420};
+    const r = rates[selectedClassType];
+    document.getElementById('norm-head').textContent = `② ${selectedClassType} 课时与折扣`;
+    document.getElementById('norm-hint').textContent = `原价${r}元/小时。折扣规则：低于100h最低8折；100-150h最低78折；高于150h最低75折。`;
+  }
+  clearResult();
+}));
+
+function toggleSupp(id) {
+  const body = document.getElementById(id);
+  const btn = document.getElementById('btn-'+id);
+  const open = body.classList.toggle('open');
+  btn.textContent = open ? '－' : '＋';
+}
+
+function toggleClassOpt(el) {
+  el.classList.toggle('selected');
+  updateSuppTotals();
+}
+
+function updateSuppTotals() {
+  const si11h = parseFloat(document.getElementById('si11-h').value)||0;
+  const si11d = parseFloat(document.getElementById('si11-d').value)||100;
+  document.getElementById('si11-total').textContent = fmt(si11h * 620 * si11d/100);
+  const slx11h = parseFloat(document.getElementById('slx11-h').value)||0;
+  const slx11d = parseFloat(document.getElementById('slx11-d').value)||100;
+  document.getElementById('slx11-total').textContent = fmt(slx11h * 450 * slx11d/100);
+  const si12h = parseFloat(document.getElementById('si12-h').value)||0;
+  const si12d = parseFloat(document.getElementById('si12-d').value)||100;
+  document.getElementById('si12-total').textContent = fmt(si12h * 400 * si12d/100);
+  const slx12h = parseFloat(document.getElementById('slx12-h').value)||0;
+  const slx12d = parseFloat(document.getElementById('slx12-d').value)||100;
+  document.getElementById('slx12-total').textContent = fmt(slx12h * 300 * slx12d/100);
+  // 雅思班课多选
+  const sicD = parseFloat(document.getElementById('sic-d').value)||100;
+  let sicSum = 0;
+  document.querySelectorAll('[data-g="ieltsclass"].selected').forEach(o => sicSum += parseInt(o.dataset.price));
+  document.getElementById('sic-total').textContent = sicSum > 0 ? fmt(sicSum * sicD/100) : '—';
+  // 留学预备班课多选
+  const slcD = parseFloat(document.getElementById('slc-d').value)||100;
+  let slcSum = 0;
+  document.querySelectorAll('[data-g="lxclass"].selected').forEach(o => slcSum += parseInt(o.dataset.price));
+  document.getElementById('slc-total').textContent = slcSum > 0 ? fmt(slcSum * slcD/100) : '—';
+}
+
+function getSuppTotal() {
+  let total = 0, orig = 0; let lines = [];
+  // 雅思1对1
+  if (document.getElementById('s-ielts11').classList.contains('open')) {
+    const h = parseFloat(document.getElementById('si11-h').value)||0;
+    const d = parseFloat(document.getElementById('si11-d').value)||100;
+    const o = h*620; const v = o*d/100;
+    if (v>0) { total+=v; orig+=o; lines.push({label:`雅思1对1（${h}h × 620元，${d}%）`, val:v, origVal:o}); }
+  }
+  // 雅思1对2
+  if (document.getElementById('s-ielts12').classList.contains('open')) {
+    const h = parseFloat(document.getElementById('si12-h').value)||0;
+    const d = parseFloat(document.getElementById('si12-d').value)||100;
+    const o = h*400; const v = o*d/100;
+    if (v>0) { total+=v; orig+=o; lines.push({label:`雅思1对2（${h}h × 400元，${d}%）`, val:v, origVal:o}); }
+  }
+  // 雅思班课
+  if (document.getElementById('s-ieltsclass').classList.contains('open')) {
+    const d = parseFloat(document.getElementById('sic-d').value)||100;
+    let sicSum = 0; let segs = [];
+    document.querySelectorAll('[data-g="ieltsclass"].selected').forEach(o => { sicSum += parseInt(o.dataset.price); segs.push(o.dataset.v); });
+    if (sicSum > 0) { const v = Math.round(sicSum * d/100); total+=v; orig+=sicSum; lines.push({label:`雅思班课·${segs.join('+')}（${d}%）`, val:v, origVal:sicSum}); }
+  }
+  // 留学预备1对1
+  if (document.getElementById('s-lx11').classList.contains('open')) {
+    const h = parseFloat(document.getElementById('slx11-h').value)||0;
+    const d = parseFloat(document.getElementById('slx11-d').value)||100;
+    const o = h*450; const v = o*d/100;
+    if (v>0) { total+=v; orig+=o; lines.push({label:`留学预备1对1（${h}h × 450元，${d}%）`, val:v, origVal:o}); }
+  }
+  // 留学预备1对2
+  if (document.getElementById('s-lx12').classList.contains('open')) {
+    const h = parseFloat(document.getElementById('slx12-h').value)||0;
+    const d = parseFloat(document.getElementById('slx12-d').value)||100;
+    const o = h*300; const v = o*d/100;
+    if (v>0) { total+=v; orig+=o; lines.push({label:`留学预备1对2（${h}h × 300元，${d}%）`, val:v, origVal:o}); }
+  }
+  // 留学预备班课
+  if (document.getElementById('s-lxclass').classList.contains('open')) {
+    const d = parseFloat(document.getElementById('slc-d').value)||100;
+    let slcSum = 0; let lvls = [];
+    document.querySelectorAll('[data-g="lxclass"].selected').forEach(o => { slcSum += parseInt(o.dataset.price); lvls.push(o.dataset.v); });
+    if (slcSum > 0) { const v = Math.round(slcSum * d/100); total+=v; orig+=slcSum; lines.push({label:`留学预备班课·${lvls.join('+')}（${d}%）`, val:v, origVal:slcSum}); }
+  }
+  return { total, orig, lines };
+}
+
+function fmt(n) { return '¥' + Math.round(n).toLocaleString('zh-CN'); }
+function clearResult() { document.getElementById('result-body').innerHTML = '<div class="placeholder">请完成以上选择后点击计算</div>'; }
+
+function calculate() {
+  const supp = getSuppTotal();
+  let mainPrice = 0, mainOrig = 0, mainLines = [], mainLabel = '';
+
+  if (currentMode === 'pkg') {
+    if (pkgs.length === 0) { alert('请先选择套餐'); return; }
+    // 累加所有已选套餐
+    pkgs.forEach(p => {
+      mainPrice += p.price;
+      mainOrig += p.orig;
+      if (p.orig > p.price) {
+        mainLines.push({label:`${p.name}（${p.hours}）原价`, val:p.orig, muted:true});
+        mainLines.push({label:`${p.name} 折扣价`, val:p.price});
+      } else {
+        mainLines.push({label:`${p.name}（${p.hours}）`, val:p.price});
+      }
+    });
+
+    // 非常规补费：doorRate 取最高，discRate 取最低（最优惠）
+    const pkgtype = document.querySelector('[data-g="pkgtype"].selected')?.dataset.v;
+    const maxDoorRate = pkgs.reduce((m, p) => Math.max(m, p.doorRate), 0);
+    const minDiscRate = pkgs.reduce((m, p) => Math.min(m, p.discRate), 1);
+    let extra = 0;
+    if (pkgtype === '加油包') {
+      const doors = parseInt(document.getElementById('jy-doors').value)||0;
+      const eh = parseInt(document.getElementById('jy-extra-h').value)||0;
+      if (doors>0) { const v=doors*maxDoorRate; extra+=v; mainLines.push({label:`非常规科目 ${doors}门×${maxDoorRate}元`, val:v}); }
+      if (eh>0) { const v=Math.round(eh*100*minDiscRate); extra+=v; mainLines.push({label:`非常规课时差价 ${eh}h×100元×${Math.round(minDiscRate*100)}%`, val:v}); }
+    } else if (pkgtype === '互补计划') {
+      const doors = parseInt(document.getElementById('hb-doors').value)||0;
+      const eh = parseInt(document.getElementById('hb-extra-h').value)||0;
+      if (doors>0) { const v=doors*maxDoorRate; extra+=v; mainLines.push({label:`非常规科目 ${doors}门×${maxDoorRate}元`, val:v}); }
+      if (eh>0) { const v=Math.round(eh*100*minDiscRate); extra+=v; mainLines.push({label:`非常规课时差价 ${eh}h×100元×${Math.round(minDiscRate*100)}%`, val:v}); }
+    }
+    mainPrice += extra;
+
+  } else {
+    if (!selectedClassType) { alert('请先选择班型'); return; }
+    mainLabel = selectedClassType;
+
+    if (selectedClassType === 'AL1对1') {
+      const h = parseFloat(document.getElementById('c11-hours').value)||0;
+      const d = parseFloat(document.getElementById('c11-disc').value)||80;
+      mainOrig = h * 680;
+      mainPrice = mainOrig * d / 100;
+      mainLines.push({label:`A-Level 1对1（${h}h × 680元，${d}%）`, val:mainPrice});
+
+    } else if (selectedClassType === 'IG1对1') {
+      const h = parseFloat(document.getElementById('c11-hours').value)||0;
+      const d = parseFloat(document.getElementById('c11-disc').value)||80;
+      mainOrig = h * 580;
+      mainPrice = mainOrig * d / 100;
+      mainLines.push({label:`IG 1对1（${h}h × 580元，${d}%）`, val:mainPrice});
+
+    } else if (selectedClassType === '一站式') {
+      const cd = Math.min(100, Math.max(75, parseFloat(document.getElementById('yzs-cd').value)||75));
+      const h = parseFloat(document.getElementById('yzs-h').value)||0;
+      const classPrice = Math.max(48000, 63000 * cd / 100);
+      const totalH = 150 + h;
+      const discRate = totalH >= 400 ? 73 : 75;
+      const onePrice = h * 680 * discRate / 100;
+      mainPrice = classPrice + onePrice;
+      mainLines.push({label:`班课150h（${cd}%）`, val:classPrice});
+      mainLines.push({label:`1对1 ${h}h × 680元（${discRate}%）`, val:onePrice});
+
+    } else {
+      const rates = {'AL1对2':520,'AL1对3':460,'IG1对2':500,'IG1对3':440,'AL3-6人班':420};
+      const r = rates[selectedClassType];
+      const h = parseFloat(document.getElementById('norm-h').value)||0;
+      const d = parseFloat(document.getElementById('norm-d').value)||80;
+      mainOrig = h * r;
+      mainPrice = mainOrig * d / 100;
+      mainLines.push({label:`${selectedClassType}（${h}h × ${r}元，${d}%）`, val:mainPrice});
+    }
+  }
+
+  const grandTotal = mainPrice + supp.total;
+  const totalOrig = (mainOrig || mainPrice) + (supp.orig || supp.total);
+  const totalSaved = totalOrig - grandTotal;
+
+  let html = `<div class="result-wrap">
+    <div class="result-main">
+      <div>
+        <div style="font-size:13px;color:var(--muted)">最终报价</div>
+        <div class="result-final">${fmt(grandTotal)}</div>
+        ${totalSaved > 0 ? `<div class="result-saved">合计已优惠 ${fmt(totalSaved)}</div>` : ''}
+      </div>
+      ${totalOrig > grandTotal ? `<div style="text-align:right"><div class="result-orig">合计原价 ${fmt(totalOrig)}</div></div>` : ''}
+    </div>
+    <div class="breakdown">`;
+
+  mainLines.forEach(l => {
+    if (l.muted) {
+      html += `<div class="br-row"><span class="br-label" style="text-decoration:line-through;opacity:0.5">${l.label}</span><span class="br-val" style="text-decoration:line-through;opacity:0.5">${fmt(l.val)}</span></div>`;
+    } else {
+      html += `<div class="br-row"><span class="br-label">${l.label}</span><span class="br-val">${fmt(l.val)}</span></div>`;
+    }
+  });
+
+  if (supp.lines.length > 0) {
+    html += `<div class="br-row" style="margin-top:4px;padding-top:8px;border-top:1px solid var(--border)"><span class="br-label" style="font-weight:600">补充课程</span><span></span></div>`;
+    supp.lines.forEach(l => {
+      if (l.origVal && l.origVal > l.val) {
+        html += `<div class="br-row"><span class="br-label" style="text-decoration:line-through;opacity:0.5">${l.label.replace(/（.*）/,'')} 原价</span><span class="br-val" style="text-decoration:line-through;opacity:0.5">${fmt(l.origVal)}</span></div>`;
+        html += `<div class="br-row"><span class="br-label">${l.label}</span><span class="br-val">${fmt(l.val)}</span></div>`;
+      } else {
+        html += `<div class="br-row"><span class="br-label">${l.label}</span><span class="br-val">${fmt(l.val)}</span></div>`;
+      }
+    });
+  }
+
+  html += `<div class="br-row total-row"><span>合计</span><span>${fmt(grandTotal)}</span></div>
+    </div>
+    <button class="btn-copy" onclick="doCopy()">📋 复制报价</button>
+    <button class="btn-reset" onclick="resetAll()">重新计算</button>
+  </div>`;
+
+  document.getElementById('result-body').innerHTML = html;
+
+  let ct = `【锦秋A-Level 报价单】\n\n`;
+  mainLines.forEach(l => ct += `· ${l.label}：${fmt(l.val)}\n`);
+  if (supp.lines.length > 0) {
+    ct += `\n【补充课程】\n`;
+    supp.lines.forEach(l => {
+      if (l.origVal && l.origVal > l.val) ct += `· ${l.label}：${fmt(l.val)}（原价${fmt(l.origVal)}）\n`;
+      else ct += `· ${l.label}：${fmt(l.val)}\n`;
+    });
+  }
+  ct += `\n合计原价：${fmt(totalOrig)}\n最终报价：${fmt(grandTotal)}`;
+  if (totalSaved > 0) ct += `\n合计优惠：${fmt(totalSaved)}`;
+  window._copyText = ct;
+}
+
+function doCopy() {
+  navigator.clipboard.writeText(window._copyText || '').then(() => {
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = '✅ 已复制';
+    setTimeout(() => btn.textContent = '📋 复制报价', 2000);
+  }).catch(() => prompt('请手动复制：', window._copyText));
+}
+
+function resetAll() {
+  pkgs = [];
+  selectedClassType = '';
+  document.querySelectorAll('.opt,.pkg-card').forEach(o => o.classList.remove('selected'));
+  ['section-jiayou','section-hubu','section-ig','section-11','section-yzs','section-norm'].forEach(id => document.getElementById(id).classList.add('hidden'));
+  ['s-ielts11','s-ielts12','s-ieltsclass','s-lx11','s-lx12','s-lxclass'].forEach(id => {
+    document.getElementById(id).classList.remove('open');
+    document.getElementById('btn-'+id).textContent = '＋';
+  });
+  clearResult();
+}
+
+updateSuppTotals();
+</script>
+</body>
+</html>

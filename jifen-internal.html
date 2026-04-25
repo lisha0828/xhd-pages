@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>积分申请补填（内部）— 新航道</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; 
+    background: #f5f5f5; 
+    min-height: 100vh; 
+    padding: 24px 16px 60px; 
+  }
+  .card { 
+    max-width: 600px; margin: 0 auto; background: #fff; 
+    border-radius: 16px; box-shadow: 0 2px 20px rgba(0,0,0,0.08); overflow: hidden; 
+  }
+  .header { 
+    background: linear-gradient(135deg, #11998e, #38ef7d); 
+    color: #fff; padding: 28px 24px 20px; text-align: center; 
+  }
+  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .header p { font-size: 13px; opacity: 0.85; }
+  .body { padding: 24px; }
+
+  /* 客户已填信息展示区 */
+  .customer-block {
+    background: #f0faf6;
+    border: 1px solid #b2dfdb;
+    border-left: 4px solid #11998e;
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 24px;
+  }
+  .customer-block .block-title {
+    font-size: 13px; font-weight: 700; color: #11998e;
+    margin-bottom: 12px; letter-spacing: 0.5px;
+  }
+  .info-row {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    font-size: 14px; padding: 5px 0;
+    border-bottom: 1px dashed #e0f2f1;
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-key { color: #888; min-width: 90px; }
+  .info-val { font-weight: 600; color: #333; text-align: right; flex: 1; margin-left: 8px; word-break: break-all; }
+
+  /* 分隔标题 */
+  .section-title {
+    font-size: 15px; font-weight: 700; color: #333;
+    margin-bottom: 16px; padding-bottom: 8px;
+    border-bottom: 2px solid #f0f0f0;
+  }
+
+  /* 表单字段 */
+  .field { margin-bottom: 16px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-2 .field { margin-bottom: 0; display: flex; flex-direction: column; }
+  .grid-2 .field > input, .grid-2 .field > select { margin-top: auto; }
+  label { 
+    display: block; font-size: 16px; color: #555; 
+    margin-bottom: 8px; font-weight: 700; 
+  }
+  label .req { color: #e53935; margin-left: 2px; }
+  input, select { 
+    width: 100%; padding: 12px 14px; border: 1px solid #ddd; border-radius: 8px; 
+    font-size: 15px; font-family: inherit; color: #333; background: #fafafa; 
+    transition: all 0.3s; line-height: 1.5;
+  }
+  input:focus, select:focus { 
+    border-color: #11998e; background: #fff; outline: none; 
+    box-shadow: 0 0 0 3px rgba(17,153,142,0.1); 
+  }
+  ::placeholder { color: #aaa; font-weight: 400; }
+
+  /* 续费开关 */
+  .switch-wrapper { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+  .switch-wrapper label { margin-bottom: 0; }
+  .switch { position: relative; display: inline-block; width: 36px; height: 20px; }
+  .switch input { opacity: 0; width: 0; height: 0; }
+  .slider { 
+    position: absolute; cursor: pointer; top:0; left:0; right:0; bottom:0; 
+    background: #ddd; transition: .4s; border-radius: 20px; 
+  }
+  .slider:before { 
+    position: absolute; content: ""; height: 14px; width: 14px; 
+    left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; 
+  }
+  input:checked + .slider { background-color: #11998e; }
+  input:checked + .slider:before { transform: translateX(16px); }
+
+  /* 自动计算日期展示 */
+  .calc-block {
+    background: #fff8e1;
+    border: 1px solid #ffe082;
+    border-left: 4px solid #f9a825;
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .calc-block .calc-label { font-size: 14px; color: #888; font-weight: 700; }
+  .calc-block .calc-val { font-size: 16px; color: #f57f17; font-weight: 700; }
+  .calc-block .calc-val.empty { color: #ccc; font-size: 13px; }
+
+  /* 提交按钮 */
+  .submit-btn { 
+    width: 100%; padding: 14px; 
+    background: linear-gradient(135deg, #11998e, #38ef7d); 
+    color: white; border: none; border-radius: 8px; 
+    font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; 
+    transition: opacity 0.2s;
+  }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  /* 错误页 */
+  .error-page {
+    padding: 40px 24px; text-align: center;
+  }
+  .error-page .icon { font-size: 48px; margin-bottom: 16px; }
+  .error-page h2 { font-size: 18px; color: #333; margin-bottom: 8px; }
+  .error-page p { font-size: 14px; color: #999; line-height: 1.6; }
+
+  #toast { 
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
+    padding: 12px 24px; border-radius: 8px; color: white; display: none; 
+    z-index: 9999; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    white-space: nowrap;
+  }
+  hr { border: 0; border-top: 1px dashed #eee; margin: 24px 0; }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div class="card">
+  <div class="header">
+    <h1>📋 积分申请补填（内部）</h1>
+    <p>仅供顾问内部使用 · 请勿转发此链接</p>
+  </div>
+  <div class="body" id="mainBody">
+    <!-- 内容由 JS 动态生成 -->
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // 飞书多维表格 Webhook（和原来的表单用同一个，通常不需要改）
+  // ============================================================
+  const BITABLE_WEBHOOK = 'https://xhd.feishu.cn/base/automation/webhook/event/OsnSaRyh5wMSO2hJ0hmc3iW7nMb';
+
+  // ============================================================
+  // 【新代码】从 URL 参数 ?d= 中读取并解码 Base64 数据
+  // ============================================================
+  let customerData = null;
+  try {
+    const b64Data = window.location.hash.slice(1);
+    if (b64Data) {
+      // 解码 Base64 并还原中文
+      const decodedStr = decodeURIComponent(atob(b64Data).split('').map(function(c) {
+          return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+      }).join(''));
+      customerData = JSON.parse(decodedStr);
+    }
+  } catch(e) {
+    console.error('解析失败:', e);
+    customerData = null;
+  }
+
+  // ============================================================
+  // 页面渲染
+  // ============================================================
+  const mainBody = document.getElementById('mainBody');
+
+  if (!customerData) {
+    // 没有数据时显示提示
+    mainBody.innerHTML = `
+      <div class="error-page">
+        <div class="icon">🔗</div>
+        <h2>链接无效或已过期</h2>
+        <p>请从飞书通知消息里重新点击链接打开</p>
+      </div>
+    `;
+  } else {
+    // 有客户数据，渲染完整补填表单
+    mainBody.innerHTML = `
+      <!-- 客户已填信息 -->
+      <div class="customer-block">
+        <div class="block-title">👤 客户已填信息</div>
+        <div class="info-row">
+          <span class="info-key">申请日期</span>
+          <span class="info-val">${customerData.申请日期 || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">获得人姓名</span>
+          <span class="info-val">${customerData.获得人 || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">获得人电话</span>
+          <span class="info-val">${customerData.获得人电话 || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">兑换礼品</span>
+          <span class="info-val">${customerData.兑换礼品名称 || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">数量</span>
+          <span class="info-val">${customerData.兑换礼品数量 || '-'}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-key">备注</span>
+          <span class="info-val">${customerData.备注 || '无'}</span>
+        </div>
+      </div>
+
+      <div class="section-title">✏️ 请补填以下信息</div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>报名学员姓名<span class="req">*</span></label>
+          <input type="text" id="studentName" placeholder="被推荐学员">
+        </div>
+        <div class="field">
+          <label>报名学员电话<span class="req">*</span></label>
+          <input type="tel" id="studentPhone" placeholder="手机号">
+        </div>
+      </div>
+
+      <div class="field">
+        <label>学员初次报名时间<span class="req">*</span></label>
+        <input type="date" id="firstJoin">
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <div class="switch-wrapper">
+            <label>续费时间（选填）</label>
+            <label class="switch">
+              <input type="checkbox" id="renewSwitch">
+              <span class="slider"></span>
+            </label>
+          </div>
+          <input type="date" id="renewTime" disabled style="opacity:0.5;">
+        </div>
+        <div class="field">
+          <label>推荐 / 续费<span class="req">*</span></label>
+          <select id="typeSelect">
+            <option value="推荐">推荐</option>
+            <option value="续费">续费</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>报名课程<span class="req">*</span></label>
+          <input type="text" id="courseName" placeholder="">
+        </div>
+        <div class="field">
+          <label>报名金额<span class="req">*</span></label>
+          <input type="number" id="payAmount" placeholder="¥">
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <div class="field">
+          <label>兑换积分<span class="req">*</span></label>
+          <input type="number" id="pointsUsed" placeholder="">
+        </div>
+        <div class="field">
+          <label>获得人所属校区<span class="req">*</span></label>
+          <input type="text" id="winnerCampus" value="IFS">
+        </div>
+      </div>
+
+      <hr>
+
+      <!-- 自动计算：可领积分日期 -->
+      <div class="calc-block" id="calcBlock">
+        <span class="calc-label">📅 可领积分日期（自动计算）</span>
+        <span class="calc-val empty" id="calcDate">填写报名时间后自动显示</span>
+      </div>
+
+      <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">✅ 提交，写入多维表格</button>
+    `;
+
+    // 绑定续费开关逻辑
+    const renewSwitch = document.getElementById('renewSwitch');
+    const renewInput  = document.getElementById('renewTime');
+    const typeSelect  = document.getElementById('typeSelect');
+
+    function updateSwitch() {
+      if (renewSwitch.checked) {
+        renewInput.disabled = false; renewInput.style.opacity = '1';
+        typeSelect.value = '续费';
+      } else {
+        renewInput.disabled = true; renewInput.style.opacity = '0.5'; renewInput.value = '';
+        typeSelect.value = '推荐';
+      }
+      recalcDate();
+    }
+    renewSwitch.addEventListener('change', updateSwitch);
+    document.getElementById('firstJoin').addEventListener('change', recalcDate);
+    renewInput.addEventListener('change', recalcDate);
+    typeSelect.addEventListener('change', recalcDate);
+
+    // 自动计算可领积分日期
+    function recalcDate() {
+      const type      = typeSelect.value;
+      const firstJoin = document.getElementById('firstJoin').value;
+      const renewTime = renewInput.value;
+      const refDate   = (type === '续费' && renewTime) ? renewTime : firstJoin;
+
+      const el = document.getElementById('calcDate');
+      if (!refDate) {
+        el.textContent = '填写报名时间后自动显示';
+        el.className = 'calc-val empty';
+        return;
+      }
+      const d = new Date(refDate);
+      d.setMonth(d.getMonth() + 3);
+      const result = d.toISOString().split('T')[0];
+      el.textContent = result + '（报名后满3个月）';
+      el.className = 'calc-val';
+    }
+  }
+
+  // ============================================================
+  // 提交逻辑
+  // ============================================================
+  async function handleSubmit() {
+    const studentName  = document.getElementById('studentName').value.trim();
+    const studentPhone = document.getElementById('studentPhone').value.trim();
+    const firstJoin    = document.getElementById('firstJoin').value;
+    const renewTime    = document.getElementById('renewTime')?.value || '';
+    const type         = document.getElementById('typeSelect').value;
+    const courseName   = document.getElementById('courseName').value.trim();
+    const payAmount    = document.getElementById('payAmount').value;
+    const pointsUsed   = document.getElementById('pointsUsed').value;
+    const winnerCampus = document.getElementById('winnerCampus').value.trim();
+
+    if (!studentName || !studentPhone || !firstJoin || !courseName || !payAmount || !pointsUsed || !winnerCampus) {
+      showToast('❌ 请填写所有必填项', '#c0392b'); return;
+    }
+
+    // 计算可领积分日期
+    const refDate = (type === '续费' && renewTime) ? renewTime : firstJoin;
+    const d = new Date(refDate);
+    d.setMonth(d.getMonth() + 3);
+    d.setHours(0, 0, 0, 0);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    const calcDate = y + '-' + m + '-' + dd;
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true; btn.textContent = '提交中...';
+
+    const payload = {
+      "申请日期":        customerData.申请日期,
+      "报名学员姓名":     studentName,
+      "报名学员电话":     studentPhone,
+      "学员初次报名时间":  firstJoin,
+      "学员续费时间":     renewTime,
+      "推荐/续费":       type,
+      "报名课程":        courseName,
+      "报名金额":        payAmount,
+      "所属顾问/所属助教": "龚丽莎",
+      "获得人":          customerData.获得人,
+      "获得人电话":       customerData.获得人电话,
+      "获得人所属校区":    winnerCampus,
+      "兑换积分":        pointsUsed,
+      "兑换礼品名称":     customerData.兑换礼品名称,
+      "兑换礼品数量":     customerData.兑换礼品数量,
+      "备注":           customerData.备注,
+      "可领积分日期":     calcDate
+    };
+
+    try {
+      await fetch(BITABLE_WEBHOOK, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      });
+
+      showToast('✅ 已写入多维表格！', '#2e7d62');
+      document.getElementById('mainBody').style.opacity = '0.5';
+      document.getElementById('mainBody').style.pointerEvents = 'none';
+      btn.textContent = '✅ 已提交完成';
+
+    } catch(err) {
+      showToast('❌ 网络异常，请重试', '#c0392b');
+      btn.disabled = false;
+      btn.textContent = '✅ 提交，写入多维表格';
+    }
+  }
+
+  function showToast(msg, color) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.background = color; t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
+  }
+</script>
+</body>
+</html>

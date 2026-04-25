@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>新航道成都学校 · 班课入学协议</title>
+<style>
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f5f5; min-height: 100vh; padding: 24px 16px 60px; }
+  .card { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 16px; box-shadow: 0 2px 20px rgba(0,0,0,0.08); overflow: hidden; }
+  .section { padding: 20px 24px 0; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 13px; color: #555; margin-bottom: 6px; font-weight: 500; }
+  label .req { color: #e53935; margin-left: 2px; }
+  label .opt { color: #aaa; font-size: 11px; margin-left: 4px; font-weight: 400; }
+  input, select, textarea { width: 100%; padding: 11px 14px; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: 15px; font-family: inherit; color: #222; background: #fafafa; transition: border-color 0.2s; -webkit-appearance: none; }
+  textarea { resize: vertical; min-height: 80px; }
+  .row { display: flex; gap: 12px; }
+  .row .field { flex: 1; }
+  .date-row { display: flex; gap: 8px; align-items: flex-end; }
+  .date-row .field { flex: 1; }
+  .date-unit { font-size: 15px; color: #555; padding-bottom: 12px; white-space: nowrap; }
+  .divider { height: 1px; background: #f0f0f0; margin: 4px 24px 0; }
+  .submit-wrap { padding: 24px; }
+  .btn { width: 100%; padding: 15px; color: #fff; font-size: 17px; font-weight: 600; border: none; border-radius: 12px; cursor: pointer; transition: opacity 0.2s; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .hint { text-align: center; font-size: 12px; color: #999; margin-top: 10px; }
+  input.invalid, select.invalid, textarea.invalid { border-color: #e53935; }
+  .msg { text-align: center; font-size: 14px; margin-top: 12px; padding: 12px; border-radius: 8px; display: none; }
+  .msg.success { background: #e8f5e9; color: #2e7d32; }
+  .msg.error { background: #ffebee; color: #c62828; }
+  select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23666' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; padding-right: 36px; cursor: pointer; }
+  input[readonly] { background: #f5f5ff; }
+  .reset-btn { width: 100%; padding: 12px; background: #fff; font-size: 15px; font-weight: 600; border-radius: 12px; cursor: pointer; margin-top: 10px; transition: background 0.2s; display: none; }
+
+.section-title { font-size: 13px; font-weight: 600; color: #25b065; letter-spacing: 0.5px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #e8fef0; }
+.header { background: linear-gradient(135deg, #1a6e3c, #25b065); color: #fff; padding: 28px 24px 20px; text-align: center; } .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; } .header p { font-size: 13px; opacity: 0.8; } .badge { display: inline-block; background: rgba(255,255,255,0.2); border-radius: 20px; padding: 4px 12px; font-size: 12px; margin-top: 8px; }
+.btn { background: linear-gradient(135deg, #1a6e3c, #25b065); }
+input:focus, select:focus, textarea:focus { outline: none; border-color: #25b065; box-shadow: 0 0 0 3px rgba(37,176,101,0.12); background: #fff; }
+.reset-btn { color: #25b065; border: 1.5px solid #25b065; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="header">
+    <h1>新航道成都学校</h1>
+    <p>班课入学协议 · 信息填写</p>
+    
+  </div>
+  <form id="form" novalidate>
+    <div class="section" style="margin-top:20px">
+      <div class="section-title">学员信息</div>
+      
+      <div class="field"><label>学员姓名（乙方）<span class="req">*</span></label><input type="text" id="学员姓名" placeholder="请输入学员真实姓名" required></div>
+      <div class="field"><label>学员身份证号码<span class="req">*</span></label><input type="text" id="身份证号码" placeholder="请输入18位身份证号码" required maxlength="18"></div>
+      <div class="field"><label>乙方电话<span class="opt">（与监护人电话至少填一项）</span></label><input type="tel" id="乙方电话" placeholder="学员本人手机号码"></div>
+      <div class="field"><label>监护人姓名</label><input type="text" id="监护人姓名" placeholder="未成年学员填写"></div>
+      <div class="field"><label>监护人身份证号码</label><input type="text" id="监护人身份证号码" placeholder="未成年学员填写" maxlength="18"></div>
+      <div class="field"><label>监护人电话<span class="opt">（与学员电话至少填一项）</span></label><input type="tel" id="监护人电话" placeholder="监护人手机号码"></div>
+      <div class="field"><label>联系地址</label><input type="text" id="联系地址" placeholder="请输入联系地址"></div>
+      <div class="field"><label>电子邮件</label><input type="email" id="电子邮件" placeholder="邮箱"></div>
+
+    </div>
+    <div class="divider"></div>
+    <div class="section" style="margin-top:20px">
+      <div class="section-title">课程信息</div>
+      <div class="field">
+        <label>课程内容（课程阶段/课程类型/课程班型）<span class="req">*</span></label>
+        <textarea id="课程内容" placeholder="例如：雅思全程小班课" required></textarea>
+      </div>
+      <div class="field"><label>培训方式<span class="req">*</span></label>
+        <select id="培训方式" required><option value="">请选择</option><option>线下培训</option><option>线上培训</option></select>
+      </div>
+    </div>
+    <div class="divider"></div>
+    <div class="section" style="margin-top:20px">
+      <div class="section-title">费用信息</div>
+      <div class="field"><label>总费用（元）<span class="req">*</span></label><input type="number" id="总费用数字" placeholder="例如：8000" min="0" required></div>
+      <div class="field"><label>总费用大写（自动生成）</label><input type="text" id="总费用大写" readonly placeholder="输入金额后自动生成"></div>
+    </div>
+    <div class="divider"></div>
+    
+    <div class="section" style="margin-top:20px; padding-bottom:4px;">
+      <div class="section-title">签约日期</div>
+      <div class="date-row">
+        <div class="field"><label>年<span class="req">*</span></label><input type="number" id="签约年" min="2020" max="2099" required></div>
+        <div class="date-unit">年</div>
+        <div class="field"><label>月<span class="req">*</span></label><input type="number" id="签约月" min="1" max="12" required></div>
+        <div class="date-unit">月</div>
+        <div class="field"><label>日<span class="req">*</span></label><input type="number" id="签约日" min="1" max="31" required></div>
+        <div class="date-unit">日</div>
+      </div>
+    </div>
+
+    <div class="submit-wrap">
+      <button type="submit" class="btn" id="submitBtn">📄 提交协议信息</button>
+      
+      <div class="msg" id="msg"></div>
+      <p class="hint">提交后信息将发送给老师，请如实填写</p>
+    </div>
+  </form>
+</div>
+<script>var emailjs=function(e){"use strict";class t{constructor(){let e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:0,t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"Network Error";this.status=e,this.text=t}}const i={origin:"https://api.emailjs.com",blockHeadless:!1,storageProvider:(()=>{if("undefined"!=typeof localStorage)return{get:e=>Promise.resolve(localStorage.getItem(e)),set:(e,t)=>Promise.resolve(localStorage.setItem(e,t)),remove:e=>Promise.resolve(localStorage.removeItem(e))}})()},r=e=>e?"string"==typeof e?{publicKey:e}:"[object Object]"===e.toString()?e:{}:{},o=function(e){let t=arguments.length>1&&void 0!==arguments[1]?arguments[1]:"https://api.emailjs.com";if(!e)return;const o=r(e);i.publicKey=o.publicKey,i.blockHeadless=o.blockHeadless,i.storageProvider=o.storageProvider,i.blockList=o.blockList,i.limitRate=o.limitRate,i.origin=o.origin||t},a=async function(e,r){let o=arguments.length>2&&void 0!==arguments[2]?arguments[2]:{};const a=await fetch(i.origin+e,{method:"POST",headers:o,body:r}),s=await a.text(),n=new t(a.status,s);if(a.ok)return n;throw n},s=(e,t,i)=>{if(!e||"string"!=typeof e)throw"The public key is required. Visit https://dashboard.emailjs.com/admin/account";if(!t||"string"!=typeof t)throw"The service ID is required. Visit https://dashboard.emailjs.com/admin";if(!i||"string"!=typeof i)throw"The template ID is required. Visit https://dashboard.emailjs.com/admin/templates"},n=e=>e.webdriver||!e.languages||0===e.languages.length,l=()=>new t(451,"Unavailable For Headless Browser"),c=(e,t)=>{if((e=>!e.list?.length||!e.watchVariable)(e))return!1;((e,t)=>{if(!Array.isArray(e))throw"The BlockList list has to be an array";if("string"!=typeof t)throw"The BlockList watchVariable has to be a string"})(e.list,e.watchVariable);const i=(r=t,o=e.watchVariable,r instanceof FormData?r.get(o):r[o]);var r,o;return"string"==typeof i&&e.list.includes(i)},d=()=>new t(403,"Forbidden"),m=async(e,t,i)=>{if(!t.throttle||!i)return!1;((e,t)=>{if("number"!=typeof e||e<0)throw"The LimitRate throttle has to be a positive number";if(t&&"string"!=typeof t)throw"The LimitRate ID has to be a non-empty string"})(t.throttle,t.id);const r=t.id||e,o=await(async(e,t,i)=>{const r=Number(await i.get(e)||0);return t-Date.now()+r})(r,t.throttle,i);return o>0||(await i.set(r,Date.now().toString()),!1)},h=()=>new t(429,"Too Many Requests"),p=async(e,t,o,p)=>{const u=r(p),b=u.publicKey||i.publicKey,g=u.blockHeadless||i.blockHeadless,f=u.storageProvider||i.storageProvider,w={...i.blockList,...u.blockList},y={...i.limitRate,...u.limitRate};if(g&&n(navigator))return Promise.reject(l());if(s(b,e,t),(e=>{if(e&&"[object Object]"!==e.toString())throw"The template params have to be the object. Visit https://www.emailjs.com/docs/sdk/send/"})(o),o&&c(w,o))return Promise.reject(d());if(await m(location.pathname,y,f))return Promise.reject(h());const v={lib_version:"4.4.1",user_id:b,service_id:e,template_id:t,template_params:o};return a("/api/v1.0/email/send",JSON.stringify(v),{"Content-type":"application/json"})},u=async(e,t,o,p)=>{const u=r(p),b=u.publicKey||i.publicKey,g=u.blockHeadless||i.blockHeadless,f=i.storageProvider||u.storageProvider,w={...i.blockList,...u.blockList},y={...i.limitRate,...u.limitRate};if(g&&n(navigator))return Promise.reject(l());const v=(e=>"string"==typeof e?document.querySelector(e):e)(o);s(b,e,t),(e=>{if(!e||"FORM"!==e.nodeName)throw"The 3rd parameter is expected to be the HTML form element or the style selector of the form"})(v);const j=new FormData(v);return c(w,j)?Promise.reject(d()):await m(location.pathname,y,f)?Promise.reject(h()):(j.append("lib_version","4.4.1"),j.append("service_id",e),j.append("template_id",t),j.append("user_id",b),a("/api/v1.0/email/send-form",j))};var b={init:o,send:p,sendForm:u,EmailJSResponseStatus:t};return e.EmailJSResponseStatus=t,e.default=b,e.init=o,e.send=p,e.sendForm=u,Object.defineProperty(e,"__esModule",{value:!0}),e}({});
+</script>
+<script>
+emailjs.init('ePt1MEfWKamR5cmI5');
+
+function numToDaxie(num) {
+  if (!num || isNaN(num)) return '';
+  const digits = ['零','壹','贰','叁','肆','伍','陆','柒','捌','玖'];
+  const units = ['','拾','佰','仟'], bigUnits = ['','万','亿'];
+  const n = Math.floor(Number(num));
+  if (n === 0) return '零元整';
+  let result = '', s = n.toString(), groups = [];
+  for (let i = s.length; i > 0; i -= 4) groups.unshift(s.slice(Math.max(0, i-4), i));
+  for (let g = 0; g < groups.length; g++) {
+    const group = groups[g]; let groupStr = '', hasNonZero = false;
+    for (let i = 0; i < group.length; i++) {
+      const d = parseInt(group[i]), unit = units[group.length-1-i];
+      if (d !== 0) { groupStr += digits[d]+unit; hasNonZero = true; }
+      else if (hasNonZero && i < group.length-1 && groupStr.slice(-1) !== '零') groupStr += '零';
+    }
+    groupStr = groupStr.replace(/零+$/, '');
+    if (groupStr) result += groupStr + bigUnits[groups.length-1-g];
+  }
+  return result + '元整';
+}
+
+document.getElementById('总费用数字').addEventListener('input', function() {
+  document.getElementById('总费用大写').value = numToDaxie(this.value);
+});
+const today = new Date();
+document.getElementById('签约年').value = today.getFullYear();
+document.getElementById('签约月').value = today.getMonth() + 1;
+document.getElementById('签约日').value = today.getDate();
+function showMsg(text, type) {
+  const el = document.getElementById('msg');
+  el.textContent = text; el.className = 'msg '+type; el.style.display = 'block';
+}
+
+const REQUIRED = ['学员姓名','身份证号码','课程内容','培训方式','总费用数字','签约年','签约月','签约日'];
+document.getElementById('form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  let valid = true;
+  REQUIRED.forEach(id => {
+    const el = document.getElementById(id);
+    if (!el || !el.value.trim()) { el && el.classList.add('invalid'); valid = false; }
+    else el.classList.remove('invalid');
+  });
+  if (!valid) { showMsg('⚠️ 请填写所有必填项（标有 * 的字段）', 'error'); return; }
+  // 至少填一个电话验证
+  const phone1 = document.getElementById('乙方电话');
+  const phone2 = document.getElementById('监护人电话');
+  if (!phone1.value.trim() && !phone2.value.trim()) {
+    phone1.classList.add('invalid');
+    phone2.classList.add('invalid');
+    showMsg('⚠️ 请至少填写一个联系电话（学员电话或监护人电话）', 'error');
+    return;
+  }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = '⏳ 提交中...';
+  showMsg('正在提交，请稍候...', 'success');
+  const data = {
+    
+    乙方姓名: document.getElementById('学员姓名').value,
+    身份证号码: document.getElementById('身份证号码').value,
+    乙方电话: document.getElementById('乙方电话').value || '',
+    监护人姓名: document.getElementById('监护人姓名').value || '',
+    监护人身份证号码: document.getElementById('监护人身份证号码').value || '',
+    监护人电话: document.getElementById('监护人电话').value || '',
+    联系地址: document.getElementById('联系地址').value || '',
+    电子邮件: document.getElementById('电子邮件').value || '',
+    签约年: document.getElementById('签约年').value,
+    签约月: document.getElementById('签约月').value,
+    签约日: document.getElementById('签约日').value,
+
+    
+    总费用数字: document.getElementById('总费用数字').value,
+    总费用大写: document.getElementById('总费用大写').value,
+    课程内容: document.getElementById('课程内容').value,
+    培训方式: document.getElementById('培训方式').value,
+
+  };
+  
+  // 清除所有字段中的换行符，避免腾讯云拒绝URL
+  Object.keys(data).forEach(k => { if (typeof data[k] === 'string') data[k] = data[k].replace(/[\r\n]+/g, ' ').trim(); });
+  const params = new URLSearchParams(data).toString();
+  const generateUrl = 'https://xhd-pages.netlify.app/xhd-class-contract.html?' + params;
+  try {
+    await emailjs.send("service_ox1c2vb", "template_u2f63aa", {
+      学员姓名: data.乙方姓名,
+      身份证号码: data.身份证号码,
+      监护人姓名: data.监护人姓名,
+      监护人身份证号码: data.监护人身份证号码,
+      联系地址: data.联系地址,
+      联系方式: data.乙方电话 || data.监护人电话 || '',
+      电子邮件: data.电子邮件,
+      课程类别: '班课 - ' + data.课程内容,
+      培训方式: data.培训方式,
+      课程方案: data.课程内容,
+      课次: '-',
+      课时: '-',
+      总费用数字: data.总费用数字,
+      总费用大写: data.总费用大写,
+      签约年: data.签约年,
+      签约月: data.签约月,
+      签约日: data.签约日,
+      生成合同链接: generateUrl,
+    });
+    await writeToFeishu(data, '班课');
+    showMsg('✅ 提交成功！老师会尽快与您联系。', 'success');
+    document.getElementById('form').style.opacity = '0.5';
+    document.getElementById('form').style.pointerEvents = 'none';
+    btn.textContent = '✅ 已提交';
+  } catch(err) {
+    console.error(err);
+    showMsg('❌ 提交失败，请检查网络后重试。', 'error');
+    btn.disabled = false; btn.textContent = '📄 提交协议信息';
+  }
+});
+
+
+
+async function writeToFeishu(data, contractType) {
+  try {
+    const payload = {
+      学员姓名: data.乙方姓名 || '',
+      乙方电话: data.乙方电话 || '',
+      监护人姓名: data.监护人姓名 || '',
+      监护人电话: data.监护人电话 || '',
+      合同类型: contractType,
+      课程方案: data.课程方案 || data.课程内容 || '',
+      课次: data.课次 || '',
+      课时: data.课时 || '',
+      签约日期: data.签约年 + '-' + String(data.签约月).padStart(2,'0') + '-' + String(data.签约日).padStart(2,'0'),
+      金额: data.总费用数字 || '',
+    };
+    await fetch('https://xhd.feishu.cn/base/automation/webhook/event/JgeTa3MFrw90r9hIgQhcWzAAnvh', {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    });
+    console.log('✅ 飞书写入成功');
+  } catch(err) {
+    console.warn('飞书写入失败（不影响合同生成）:', err.message);
+  }
+}
+
+
+document.querySelectorAll('input, select, textarea').forEach(el => {
+  el.addEventListener('input', () => el.classList.remove('invalid'));
+  el.addEventListener('change', () => el.classList.remove('invalid'));
+});
+</script>
+</body>
+</html>

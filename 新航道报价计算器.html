@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>新航道成都 · 报价计算器</title>
+<style>
+:root {
+  --ink: #0c5ca8; --ink-dark: #094d8f; --ink-hover: #e74c3c;
+  --cream: #f4f7f9; --paper: #eef3f9; --border: #d2e0f0;
+  --muted: #788b9e; --green: #1a7a4a; --text: #2c3e50;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: var(--cream); color: var(--text); padding-bottom: 40px; -webkit-font-smoothing: antialiased; }
+
+/* 修复后的响应式 Header */
+header { background: var(--ink); color: white; padding: 16px 20px; box-shadow: 0 2px 8px rgba(12,92,168,.15); }
+.header-wrap { display: flex; flex-direction: column; gap: 6px; }
+.h-title { font-size: 20px; font-weight: 800; letter-spacing: 1px; }
+.h-sub { font-size: 12px; font-weight: 400; opacity: 0.8; }
+
+/* 当屏幕大于 480px（比如电脑/平板）时，恢复左右排列和大字号 */
+@media (min-width: 480px) {
+  header { padding: 18px 20px; }
+  .header-wrap { flex-direction: row; align-items: baseline; }
+  .h-title { font-size: 22px; }
+  .h-sub { font-size: 13px; margin-left: 12px; }
+}
+
+main { max-width: 520px; margin: 20px auto 0; padding: 0 16px; }
+
+.card { background: white; border: 1px solid var(--border); border-radius: 10px; margin-bottom: 16px; overflow: hidden; box-shadow: 0 2px 6px rgba(12,92,168,.04); }
+.card-head { background: var(--paper); padding: 12px 16px; font-size: 13px; font-weight: 600; color: var(--ink); border-bottom: 1px solid var(--border); }
+.card-body { padding: 16px; }
+
+/* 统一输入框风格 */
+select, input[type=number] { 
+  border: 1px solid #c8d6e5; 
+  border-radius: 6px; 
+  padding: 10px 12px; 
+  font-size: 14px; 
+  font-family: inherit; 
+  background: #fff; 
+  color: var(--text); 
+  outline: none; 
+  transition: all .2s ease; 
+  /* 解决 iOS 默认样式发虚的问题 */
+  -webkit-appearance: none;
+}
+select:focus, input:focus { border-color: var(--ink); box-shadow: 0 0 0 3px rgba(12,92,168,.1); }
+input[type=number] { text-align: center; } 
+select { text-align: left; }
+
+label { font-size: 12px; color: var(--muted); display: block; margin-bottom: 6px; }
+
+.btn-add { padding: 0 20px; background: var(--ink); color: white; border: none; border-radius: 6px; font-size: 14px; font-weight: 500; cursor: pointer; white-space: nowrap; height: 40px; font-family: inherit; transition: background .2s; }
+.btn-add:hover { background: var(--ink-dark); }
+
+/* 布局调整 */
+.add-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.add-row > div { flex: 1; min-width: 200px; }
+.add-row select { width: 100%; }
+
+.oo-grid { display: grid; grid-template-columns: 1fr 80px auto; gap: 10px; align-items: end; }
+.oo-grid select, .oo-grid input { width: 100%; }
+
+/* 已选课程 */
+.item-row { display: flex; align-items: center; padding: 12px 0; border-bottom: 1px solid #f0f4f8; font-size: 14px; gap: 10px; }
+.item-row:last-child { border-bottom: none; }
+.item-name { flex: 1; line-height: 1.4; color: var(--text); font-weight: 500; }
+.item-name small { color: var(--muted); font-size: 12px; display: block; margin-top: 2px; font-weight: 400; }
+.item-price { font-weight: 600; color: var(--ink); white-space: nowrap; min-width: 72px; text-align: right; }
+.btn-del { background: none; border: none; cursor: pointer; color: #b2bec3; font-size: 18px; padding: 0 4px; transition: color .2s; }
+.btn-del:hover { color: var(--ink-hover); }
+.empty { color: var(--muted); font-size: 13px; text-align: center; padding: 16px 0; }
+
+/* 折扣模块 */
+.switch-wrap { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; border-bottom: 1px dashed #d2e0f0; padding-bottom: 12px; }
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #d2e0f0; transition: .3s; border-radius: 24px; }
+.slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .3s; border-radius: 50%; }
+input:checked + .slider { background-color: var(--ink); }
+input:checked + .slider:before { transform: translateX(20px); }
+
+.discount-row { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.discount-row:last-child { margin-bottom: 0; }
+.discount-row input[type=number] { width: 80px; font-size: 15px; font-weight: 600; color: var(--ink); padding: 8px; }
+
+/* 合计 */
+.total-block { padding: 20px 16px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; background: #fafbfc; border-bottom: 1px solid #f0f4f8; }
+.total-final { font-size: 30px; font-weight: 700; color: var(--ink); margin-top: 4px; font-family: -apple-system, BlinkMacSystemFont, sans-serif; }
+.total-original { font-size: 13px; color: var(--muted); text-decoration: line-through; }
+.total-saved { font-size: 12px; color: var(--green); margin-top: 4px; font-weight: 500; }
+.btn-copy { width: 100%; padding: 14px; background: var(--ink); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 12px; transition: background .2s; }
+.btn-copy:hover { background: var(--ink-dark); }
+.btn-clear { width: 100%; padding: 12px; background: transparent; color: var(--muted); border: 1px solid #c8d6e5; border-radius: 8px; font-size: 13px; cursor: pointer; margin-top: 10px; transition: all .2s; }
+.btn-clear:hover { color: var(--ink-hover); border-color: var(--ink-hover); background: #fffcfc; }
+hr.div { border: none; border-top: 1px solid #edf2f7; margin: 12px 0; }
+.sub-row { display: flex; justify-content: space-between; font-size: 13px; margin-top: 8px; }
+
+/* 针对特别小的手机屏幕优化按钮排版 */
+@media (max-width: 400px) {
+  .oo-grid { grid-template-columns: 1fr 70px auto; gap: 6px; }
+  .btn-add { padding: 0 14px; }
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="header-wrap">
+    <div class="h-title">新航道成都 · 报价计算器</div>
+    <div class="h-sub">选课程 → 填课时 → 打折 → 出价格</div>
+  </div>
+</header>
+<main>
+
+<div class="card">
+  <div class="card-head">＋ 班课（固定总价）</div>
+  <div class="card-body">
+    <div class="add-row">
+      <div>
+        <label>选择课程</label>
+        <select id="sel-class">
+          <optgroup label="小学英语">
+            <option value="POWER UP 班课|14000|78H·52次">POWER UP 班课 14,000元（78H）</option>
+            <option value="自然拼读班课|5400|30H·20次">自然拼读班课 5,400元（30H）</option>
+          </optgroup>
+          <optgroup label="中学英语">
+            <option value="THINK 班课|13000|72H·48次">THINK 班课 13,000元（72H）</option>
+            <option value="KET 考冲班|4300|24H·16次">KET 考冲班 4,300元（24H）</option>
+            <option value="PET 考冲班|5400|30H·20次">PET 考冲班 5,400元（30H）</option>
+          </optgroup>
+          <optgroup label="留学预备">
+            <option value="留学预备二级（班课）|10500|60H·40次">留学预备二级·班课 10,500元（60H）</option>
+            <option value="留学预备三级（班课）|10500|60H·40次">留学预备三级·班课 10,500元（60H）</option>
+          </optgroup>
+          <optgroup label="雅思班课">
+            <option value="雅思B段精讲班|12800|60H·40次">雅思B段精讲班 12,800元（60H）</option>
+            <option value="雅思C段强化班|12800|60H·40次">雅思C段强化班 12,800元（60H）</option>
+            <option value="雅思D段冲刺班|6600|36H·24次">雅思D段冲刺班 6,600元（36H）</option>
+          </optgroup>
+          <optgroup label="托福班课">
+            <option value="托福B段精讲班|11800|72H·48次">托福B段精讲班 11,800元（72H）</option>
+            <option value="托福C段强化班|11800|72H·48次">托福C段强化班 11,800元（72H）</option>
+            <option value="托福D段冲刺班|3600|24H·16次">托福D段冲刺班 3,600元（24H）</option>
+          </optgroup>
+          <optgroup label="雅思双向班（无折扣）">
+            <option value="雅思双向班·精讲听阅|6400|30H·20次">雅思双向班·精讲听阅 6,400元（30H）</option>
+            <option value="雅思双向班·精讲口写|6400|30H·20次">雅思双向班·精讲口写 6,400元（30H）</option>
+            <option value="雅思双向班·强化听阅|6400|30H·20次">雅思双向班·强化听阅 6,400元（30H）</option>
+            <option value="雅思双向班·强化口写|6400|30H·20次">雅思双向班·强化口写 6,400元（30H）</option>
+          </optgroup>
+          <optgroup label="留学直通车">
+            <option value="留学直通车A计划（BCD段+留学申请）|35800|156H">留学直通车A计划 35,800元（156H）</option>
+            <option value="留学直通车B计划（CD段+留学申请）|23800|96H">留学直通车B计划 23,800元（96H）</option>
+          </optgroup>
+          <optgroup label="4R个性化课时包">
+            <option value="4R课时包 E包|30800|1V1·60H">4R E包 30,800元（1V1·60H）</option>
+            <option value="4R课时包 D包|41800|1V1·84H">4R D包 41,800元（1V1·84H）</option>
+            <option value="4R课时包 C包|47800|1V1·96H">4R C包 47,800元（1V1·96H）</option>
+            <option value="4R课时包 B包|69800|1V1·156H">4R B包 69,800元（1V1·156H）</option>
+            <option value="4R课时包 A包|90800|1V1·216H">4R A包 90,800元（1V1·216H）</option>
+          </optgroup>
+          <optgroup label="白金工作室">
+            <option value="剑桥白金工作室·活力|27300|正课42H（总63H）">白金工作室·活力 27,300元（正课42H）</option>
+            <option value="剑桥白金工作室·能量|46800|正课72H（总108H）">白金工作室·能量 46,800元（正课72H）</option>
+            <option value="剑桥白金工作室·冲刺|66300|正课102H（总153H）">白金工作室·冲刺 66,300元（正课102H）</option>
+          </optgroup>
+          <optgroup label="大学英语四六级">
+            <option value="四级6人班|4980|40H">四级6人班 4,980元（40H）</option>
+            <option value="四级15人班|2980|40H">四级15人班 2,980元（40H）</option>
+            <option value="六级6人班|4980|40H">六级6人班 4,980元（40H）</option>
+            <option value="六级15人班|2980|40H">六级15人班 2,980元（40H）</option>
+          </optgroup>
+          <optgroup label="国际课程">
+            <option value="A-Level牛剑班（1年）|30000|1年">A-Level牛剑班 30,000元/年</option>
+          </optgroup>
+        </select>
+      </div>
+      <button class="btn-add" onclick="addClass()">添加</button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">＋ 1对1 / 1对2（课时费 × 小时数）</div>
+  <div class="card-body">
+    <div class="oo-grid">
+      <div>
+        <label>课程类型</label>
+        <select id="sel-11">
+          <optgroup label="雅思">
+            <option value="雅思 1对1|620">雅思 1对1（620元/h）</option>
+            <option value="雅思 1对2|400">雅思 1对2（400元/h）</option>
+          </optgroup>
+          <optgroup label="托福">
+            <option value="托福 1对1|620">托福 1对1（620元/h）</option>
+            <option value="托福 1对2|400">托福 1对2（400元/h）</option>
+          </optgroup>
+          <optgroup label="AP / SAT / 学科">
+            <option value="AP/学科 1对1|650">AP/学科 1对1（650元/h）</option>
+            <option value="AP/学科 1对2|420">AP/学科 1对2（420元/h）</option>
+          </optgroup>
+          <optgroup label="留学预备/THINK/KET/PET">
+            <option value="留学预备/THINK/KET/PET 1对1|450">留学预备 1对1（450元/h）</option>
+            <option value="留学预备/THINK/KET/PET 1对2|300">留学预备 1对2（300元/h）</option>
+          </optgroup>
+          <optgroup label="四六级">
+            <option value="四六级 1对1|450">四六级 1对1（450元/h）</option>
+            <option value="四六级 1对2|300">四六级 1对2（300元/h）</option>
+            <option value="四六级 1对3|200">四六级 1对3（200元/h）</option>
+          </optgroup>
+          <optgroup label="小托福 / 国际备考">
+            <option value="小托福 1对1|500">小托福 1对1（500元/h）</option>
+            <option value="小托福 1对2|320">小托福 1对2（320元/h）</option>
+            <option value="国际备考冲刺 1对1|580">国际备考冲刺 1对1（580元/h）</option>
+            <option value="国际备考冲刺 1对2|400">国际备考冲刺 1对2（400元/h）</option>
+          </optgroup>
+          <optgroup label="GRE / GMAT / IB">
+            <option value="GRE/GMAT 1对1|650">GRE/GMAT 1对1（650元/h）</option>
+            <option value="GRE/GMAT 1对2|420">GRE/GMAT 1对2（420元/h）</option>
+            <option value="IB 1对1|700">IB 1对1（700元/h）</option>
+            <option value="IB 1对2|460">IB 1对2（460元/h）</option>
+          </optgroup>
+        </select>
+      </div>
+      <div>
+        <label>小时数</label>
+        <input type="number" id="inp-hours" value="10" min="1" max="500" step="0.5">
+      </div>
+      <button class="btn-add" onclick="add11()">添加</button>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">已选课程</div>
+  <div class="card-body" style="padding-top:4px;">
+    <div id="item-list"><div class="empty">尚未添加课程</div></div>
+    <div id="subtotal-area" style="display:none">
+      <hr class="div">
+      <div class="sub-row"><span style="color:var(--muted)">小计（原价）</span><span id="subtotal-val" style="font-weight:600; color:var(--text);"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-head">折扣设置</div>
+  <div class="card-body">
+    <div class="switch-wrap">
+      <span style="font-size: 14px; font-weight: 500; color: var(--text);">启用班课 / 1V1 独立折扣</span>
+      <label class="switch">
+        <input type="checkbox" id="split-toggle" onchange="toggleDiscountMode()">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <div id="unified-discount-box" class="discount-row">
+      <input type="number" id="inp-discount" value="100" min="1" max="100" step="0.5" oninput="render()">
+      <div>
+        <div style="font-size:14px; color:var(--muted);">% <span style="font-size:13px; color:var(--text); margin-left:6px;">统一折扣</span></div>
+        <div style="font-size:12px; color:var(--muted); margin-top:2px; font-weight:300;">填 85 = 八五折 · 填 100 = 不打折</div>
+      </div>
+    </div>
+
+    <div id="split-discount-box" style="display: none; flex-direction: column;">
+      <div class="discount-row">
+        <span style="width: 40px; font-size: 14px; color: var(--text);">班课</span>
+        <input type="number" id="inp-discount-class" value="100" min="1" max="100" step="0.5" oninput="render()">
+        <span style="font-size:14px; color:var(--muted);">%</span>
+      </div>
+      <div class="discount-row">
+        <span style="width: 40px; font-size: 14px; color: var(--text);">1V1</span>
+        <input type="number" id="inp-discount-1v1" value="100" min="1" max="100" step="0.5" oninput="render()">
+        <span style="font-size:14px; color:var(--muted);">%</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" style="margin-bottom: 0;">
+  <div class="card-head">报价结果</div>
+  <div class="total-block">
+    <div>
+      <div style="font-size:13px; color:var(--muted);">最终报价</div>
+      <div class="total-final" id="total-final">—</div>
+      <div class="total-saved" id="total-saved"></div>
+    </div>
+    <div style="text-align:right">
+      <div class="total-original" id="total-original"></div>
+      <div id="discount-show" style="font-size:12px; color:var(--muted); margin-top:6px;"></div>
+    </div>
+  </div>
+  <div style="padding: 16px;">
+    <button class="btn-copy" onclick="copyResult()">📋 复制报价方案</button>
+    <button class="btn-clear" onclick="clearAll()">清空重来</button>
+  </div>
+</div>
+
+</main>
+<script>
+let items = [];
+let isSplitMode = false;
+
+function toggleDiscountMode() {
+  isSplitMode = document.getElementById('split-toggle').checked;
+  document.getElementById('unified-discount-box').style.display = isSplitMode ? 'none' : 'flex';
+  document.getElementById('split-discount-box').style.display = isSplitMode ? 'flex' : 'none';
+  render();
+}
+
+function addClass() {
+  const parts = document.getElementById('sel-class').value.split('|');
+  const name = parts[0], price = +parts[1], hours = parts[2] || '';
+  const note = hours ? `班课 · ${hours}` : '班课';
+  items.push({ type: 'class', name, price: +price, note });
+  render();
+}
+
+function add11() {
+  const [name, r] = document.getElementById('sel-11').value.split('|');
+  const h = parseFloat(document.getElementById('inp-hours').value) || 1;
+  items.push({ type: '1v1', name, price: +r * h, note: `${h}小时 × ${r}元/h` });
+  render();
+}
+
+function removeItem(i) { items.splice(i, 1); render(); }
+function fmt(n) { return '¥' + Math.round(n).toLocaleString('zh-CN'); }
+
+function render() {
+  const list = document.getElementById('item-list');
+  const sa = document.getElementById('subtotal-area');
+  
+  if (!items.length) {
+    list.innerHTML = '<div class="empty">尚未添加课程</div>';
+    sa.style.display = 'none';
+    document.getElementById('total-final').textContent = '—';
+    ['total-original','total-saved','discount-show'].forEach(id => document.getElementById(id).textContent = '');
+    return;
+  }
+  
+  list.innerHTML = items.map((it,i) => `
+    <div class="item-row">
+      <div class="item-name">${it.name}<small>${it.note}</small></div>
+      <div class="item-price">${fmt(it.price)}</div>
+      <button class="btn-del" onclick="removeItem(${i})" title="移除">×</button>
+    </div>`).join('');
+    
+  const subClass = items.filter(i => i.type === 'class').reduce((s,it) => s + it.price, 0);
+  const sub1v1 = items.filter(i => i.type === '1v1').reduce((s,it) => s + it.price, 0);
+  const subTotal = subClass + sub1v1;
+  
+  sa.style.display = 'block';
+  document.getElementById('subtotal-val').textContent = fmt(subTotal);
+  
+  let finalPrice = 0;
+  let discountDisplay = '';
+  
+  if (isSplitMode) {
+    const dc = Math.min(100, Math.max(1, parseFloat(document.getElementById('inp-discount-class').value) || 100));
+    const d1 = Math.min(100, Math.max(1, parseFloat(document.getElementById('inp-discount-1v1').value) || 100));
+    
+    finalPrice = (subClass * dc / 100) + (sub1v1 * d1 / 100);
+    
+    if (dc < 100 || d1 < 100) {
+      let dsArr = [];
+      if (subClass > 0) dsArr.push(`班课${dc}%`);
+      if (sub1v1 > 0) dsArr.push(`1V1 ${d1}%`);
+      discountDisplay = dsArr.join(' | ');
+    } else {
+      discountDisplay = '未打折';
+    }
+  } else {
+    const d = Math.min(100, Math.max(1, parseFloat(document.getElementById('inp-discount').value) || 100));
+    finalPrice = subTotal * d / 100;
+    discountDisplay = d < 100 ? `${d}% · ${(d/10).toFixed(1)}折` : '未打折';
+  }
+
+  document.getElementById('total-final').textContent = fmt(finalPrice);
+  
+  if (finalPrice < subTotal) {
+    document.getElementById('total-original').textContent = `原价 ${fmt(subTotal)}`;
+    document.getElementById('total-saved').textContent = `已省 ${fmt(subTotal - finalPrice)}`;
+    document.getElementById('discount-show').textContent = discountDisplay;
+  } else {
+    document.getElementById('total-original').textContent = '';
+    document.getElementById('total-saved').textContent = '';
+    document.getElementById('discount-show').textContent = discountDisplay;
+  }
+}
+
+function copyResult() {
+  if (!items.length) { alert('请先添加课程哦！'); return; }
+  
+  const subClass = items.filter(i => i.type === 'class').reduce((s,it) => s + it.price, 0);
+  const sub1v1 = items.filter(i => i.type === '1v1').reduce((s,it) => s + it.price, 0);
+  const subTotal = subClass + sub1v1;
+  
+  let finalPrice = 0;
+  let discountText = '';
+  
+  if (isSplitMode) {
+    const dc = Math.min(100, Math.max(1, parseFloat(document.getElementById('inp-discount-class').value) || 100));
+    const d1 = Math.min(100, Math.max(1, parseFloat(document.getElementById('inp-discount-1v1').value) || 100));
+    finalPrice = (subClass * dc / 100) + (sub1v1 * d1 / 100);
+    
+    if (dc < 100 || d1 < 100) {
+      let dArr = [];
+      if (subClass > 0) dArr.push(`班课 ${dc}%`);
+      if (sub1v1 > 0) dArr.push(`1V1 ${d1}%`);
+      discountText = `\n优惠折扣：${dArr.join('，')}`;
+    }
+  } else {
+    const d = Math.min(100, Math.max(1, parseFloat(document.getElementById('inp-discount').value) || 100));
+    finalPrice = subTotal * d / 100;
+    if (d < 100) {
+      discountText = `\n优惠折扣：${d}%（${(d/10).toFixed(1)}折）`;
+    }
+  }
+
+  let text = '【新航道成都 课程报价】\n\n';
+  items.forEach(it => { text += `· ${it.name}\n  (${it.note})：${fmt(it.price)}\n\n`; });
+  text += `原价合计：${fmt(subTotal)}`;
+  
+  if (finalPrice < subTotal) { 
+    text += discountText;
+    text += `\n优惠金额：-${fmt(subTotal - finalPrice)}`; 
+  }
+  
+  text += `\n\n最终报价：${fmt(finalPrice)}`;
+  
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.btn-copy');
+    btn.textContent = '✅ 已成功复制到剪贴板';
+    setTimeout(() => btn.textContent = '📋 复制报价方案', 2000);
+  }).catch(() => prompt('请手动复制：', text));
+}
+
+function clearAll() { 
+  items = []; 
+  document.getElementById('inp-discount').value = 100; 
+  document.getElementById('inp-discount-class').value = 100;
+  document.getElementById('inp-discount-1v1').value = 100;
+  render(); 
+}
+
+render();
+</script>
+</body>
+</html>

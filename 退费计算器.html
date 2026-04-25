@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>费用计算器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --ink: #1c2e2a;
+  --muted: #6b857d;
+  --light: #f2f7f5;
+  --border: #c8ddd8;
+  --card: #ffffff;
+  --bg: #f2f7f5;
+  --accent: #1a5c4a;
+  --terra: #c4573a;
+  --r: 12px;
+  --shadow: 0 2px 10px rgba(15,23,42,.07);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body {
+  font-family: 'Noto Sans SC', 'PingFang SC', sans-serif;
+  background: #c8d8d4; min-height: 100vh;
+  display: flex; justify-content: center; padding: 24px 0 48px;
+}
+.page-wrap {
+  width: 100%; max-width: 480px; background: var(--bg);
+  border-radius: 18px; overflow: hidden;
+  box-shadow: 0 8px 40px rgba(15,23,42,.16);
+}
+@media (max-width: 520px) {
+  body { padding: 0; background: var(--bg); }
+  .page-wrap { border-radius: 0; box-shadow: none; }
+}
+.hdr {
+  background: linear-gradient(150deg, #0d3028 0%, #1a5c4a 100%);
+  padding: 22px 18px 18px; color: #fff;
+  position: relative; overflow: hidden;
+}
+.hdr::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 90% 40%, rgba(196,87,58,.2) 0%, transparent 60%);
+}
+.hdr-tag { font-size: 10px; letter-spacing: 2.5px; color: rgba(255,255,255,.55); text-transform: uppercase; margin-bottom: 5px; position: relative; }
+.hdr h1 { font-size: 20px; font-weight: 900; position: relative; }
+.hdr-sub { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 4px; position: relative; }
+.hdr-icon { position: absolute; right: 18px; top: 16px; font-size: 46px; opacity: .1; }
+.brand-bar { background: #0d3028; display: flex; padding: 10px 14px; gap: 7px; }
+.brand-btn {
+  flex: 1; height: 34px; border: none; border-radius: 8px;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer;
+  background: rgba(255,255,255,.08); color: rgba(255,255,255,.55); transition: all .18s;
+}
+.brand-btn.on { background: #1a5c4a; color: #fff; }
+.content { padding: 14px; }
+.section { background: var(--card); border-radius: var(--r); box-shadow: var(--shadow); margin-bottom: 12px; overflow: hidden; }
+.sec-head { padding: 11px 14px 0; font-size: 11px; font-weight: 700; letter-spacing: 1.5px; color: var(--muted); text-transform: uppercase; }
+.sec-body { padding: 10px 14px 14px; }
+label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; margin-top: 10px; }
+label:first-child { margin-top: 0; }
+select, input[type=number], input[type=text] {
+  width: 100%; height: 42px; padding: 0 12px;
+  border: 1.5px solid var(--border); border-radius: 9px;
+  background: var(--light); color: var(--ink); font-size: 15px; font-family: inherit;
+  appearance: none; -webkit-appearance: none; transition: border-color .15s;
+}
+select:focus, input:focus { outline: none; border-color: var(--accent); background: #fff; }
+select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2394a3b8' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px;
+}
+.course-card {
+  border: 1.5px solid var(--border); border-radius: 10px;
+  padding: 12px; margin-bottom: 10px; background: var(--light);
+}
+.course-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; gap: 8px; }
+.course-name-inp {
+  border: none !important; background: transparent !important;
+  height: auto !important; padding: 0 !important;
+  font-size: 14px; font-weight: 700; color: var(--ink); flex: 1; box-shadow: none !important;
+}
+.del-btn { font-size: 12px; color: #94a3b8; border: none; background: none; cursor: pointer; padding: 4px 0 4px 10px; font-family: inherit; flex-shrink: 0; }
+.del-btn:active { color: var(--terra); }
+.g3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.g3 label { font-size: 11px; margin-top: 0; }
+.g3 input { height: 36px; font-size: 13px; }
+.ref-price { font-size: 10px; color: var(--accent); margin-top: 3px; min-height: 13px; }
+.disc-inline { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.disc-inline label { margin: 0; white-space: nowrap; font-size: 11px; flex-shrink: 0; }
+.disc-inline input { flex: 1; max-width: 90px; height: 34px; font-size: 13px; }
+.disc-inline .tip { font-size: 10px; color: var(--muted); flex: 1; line-height: 1.3; }
+.course-result { margin-top: 10px; background: var(--card); border-radius: 8px; padding: 8px 10px; border: 1px solid var(--border); }
+.cr-row { display: flex; justify-content: space-between; font-size: 12px; padding: 3px 0; }
+.cr-lbl { color: var(--muted); }
+.cr-val { font-weight: 700; color: var(--ink); }
+.cr-refund { display: flex; justify-content: space-between; font-size: 13px; padding-top: 6px; margin-top: 4px; border-top: 1px solid var(--border); }
+.cr-refund .lbl { color: var(--muted); }
+.cr-refund .val { font-weight: 900; color: var(--terra); }
+.add-area { display: flex; gap: 8px; margin-top: 4px; }
+.add-area select { flex: 1; height: 40px; font-size: 13px; }
+.btn-sm { height: 40px; padding: 0 14px; border: 1.5px solid var(--border); border-radius: 9px; background: var(--card); color: var(--ink); font-size: 13px; font-weight: 700; font-family: inherit; cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+.btn-sm:active { background: var(--light); }
+.empty-hint { font-size: 13px; color: var(--muted); padding: 6px 0 10px; text-align: center; }
+.r-row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; font-size: 13px; border-bottom: 1px solid var(--border); }
+.r-row:last-child { border-bottom: none; }
+.r-lbl { color: var(--muted); }
+.r-val { font-weight: 700; color: var(--ink); }
+.toggle-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px 12px; }
+.toggle-row span { font-size: 13px; color: var(--muted); }
+.toggle { position: relative; width: 40px; height: 24px; cursor: pointer; flex-shrink: 0; }
+.toggle input { opacity: 0; width: 0; height: 0; }
+.tslider { position: absolute; inset: 0; background: var(--border); border-radius: 12px; transition: background .2s; }
+.tslider:before { content: ''; position: absolute; width: 18px; height: 18px; left: 3px; top: 3px; background: white; border-radius: 50%; transition: transform .2s; }
+.toggle input:checked + .tslider { background: var(--accent); }
+.toggle input:checked + .tslider:before { transform: translateX(16px); }
+.total-strip { background: linear-gradient(135deg, #0d3028, #1a5c4a); border-radius: var(--r); padding: 16px 18px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.total-strip .lbl { font-size: 13px; color: rgba(255,255,255,.6); }
+.total-strip .val { font-size: 26px; font-weight: 900; color: #fff; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+  <div class="hdr">
+    <div class="hdr-tag">新航道成都学校</div>
+    <h1>费用计算器</h1>
+    <div class="hdr-sub">选套餐 · 填课时 · 定折扣 · 出退费</div>
+    <div class="hdr-icon">🧮</div>
+  </div>
+  <div class="brand-bar">
+    <button class="brand-btn on" onclick="setBrand('新航道',this)">新航道</button>
+    <button class="brand-btn" onclick="setBrand('锦秋',this)">锦秋</button>
+    <button class="brand-btn" onclick="setBrand('腾飞',this)">腾飞</button>
+  </div>
+  <div class="content">
+    <div class="section">
+      <div class="sec-head">套餐预设</div>
+      <div class="sec-body">
+        <label>选套餐后自动填入课程</label>
+        <select id="pkg-sel" onchange="loadPreset()"><option value="">— 不选套餐，手动填 —</option></select>
+      </div>
+      <div class="toggle-row">
+        <label class="toggle"><input type="checkbox" id="split-toggle" onchange="splitMode=this.checked;renderAll()"><span class="tslider"></span></label>
+        <span>分开输入每门课实收和折扣</span>
+      </div>
+      <div id="unified-inputs" class="sec-body" style="border-top:1px solid var(--border);padding-top:10px">
+        <label>实收总价（元）</label>
+        <input type="number" id="unified-paid" placeholder="所有课程实收总价" min="0" onchange="unifiedPaid=+this.value;renderAll()">
+        <div id="unified-disc-area" style="display:none;margin-top:10px">
+          <div class="disc-inline">
+            <label style="margin:0">消耗折扣</label>
+            <input type="number" id="unified-disc" step="0.1" min="0" max="200" placeholder="如 85" onchange="unifiedDisc=+this.value;unifiedDiscM=true;renderAll()">
+            <span class="tip" id="unified-disc-tip"></span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="section">
+      <div class="sec-head">课程明细</div>
+      <div class="sec-body">
+        <div id="courses"><div class="empty-hint">暂无课程，选套餐或用下方添加</div></div>
+        <div class="add-area">
+          <select id="qs"><option value="">— 快速添加课型 —</option></select>
+          <button class="btn-sm" onclick="quickAdd()">添加</button>
+          <button class="btn-sm" onclick="addBlank()">空白</button>
+        </div>
+      </div>
+    </div>
+    <div id="total-strip" style="display:none">
+      <div class="section" style="margin-bottom:12px">
+        <div class="sec-head">汇总明细</div>
+        <div class="sec-body" style="padding-top:8px">
+          <div id="summary-rows"></div>
+        </div>
+      </div>
+      <div class="total-strip">
+        <span class="lbl">合计应退</span>
+        <span class="val" id="total-val">¥0.00</span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+const P={
+  '锦秋':[
+    {name:'互补计划 A（雅思40h＋AL80h）',courses:[{n:'雅思 1对1',u:620,h:40},{n:'A-Level 1对1',u:680,h:80}]},
+    {name:'互补计划 B（雅思80h＋AL120h）',courses:[{n:'雅思 1对1',u:620,h:80},{n:'A-Level 1对1',u:680,h:120}]},
+    {name:'加油包 A（AL 60h）',courses:[{n:'A-Level 1对1',u:680,h:60}]},
+    {name:'加油包 B（AL 100h）',courses:[{n:'A-Level 1对1',u:680,h:100}]},
+    {name:'加油包 C（AL 180h）',courses:[{n:'A-Level 1对1',u:680,h:180}]},
+    {name:'IG 加油包 A（60h）',courses:[{n:'IG 1对1',u:580,h:60}]},
+    {name:'IG 加油包 B（100h）',courses:[{n:'IG 1对1',u:580,h:100}]},
+    {name:'IG 加油包 C（180h）',courses:[{n:'IG 1对1',u:580,h:180}]},
+    {name:'Pre-IG 赋能包 A（60h）',courses:[{n:'Pre-IG 1对1',u:580,h:60}]},
+    {name:'Pre-IG 赋能包 B（90h）',courses:[{n:'Pre-IG 1对1',u:580,h:90}]},
+    {name:'雅思B/C段班课（60h）',courses:[{n:'雅思B/C段班课',u:12800/60,h:60}]},
+    {name:'雅思D段冲刺班（36h）',courses:[{n:'雅思D段班课',u:6600/36,h:36}]},
+    {name:'留学预备班课（60h）',courses:[{n:'留学预备班课',u:10500/60,h:60}]},
+  ],
+  '腾飞':[
+    {name:'互补计划 A（托福72h＋AP30h）',courses:[{n:'托福 1V1',u:620,h:72},{n:'AP/学科 1V1',u:650,h:30}]},
+    {name:'互补计划 B（托福72h＋AP60h）',courses:[{n:'托福 1V1',u:620,h:72},{n:'AP/学科 1V1',u:650,h:60}]},
+    {name:'互补计划 C（托福72h＋AP120h）',courses:[{n:'托福 1V1',u:620,h:72},{n:'AP/学科 1V1',u:650,h:120}]},
+    {name:'互补计划 D（托福96h＋AP180h）',courses:[{n:'托福 1V1',u:620,h:96},{n:'AP/学科 1V1',u:650,h:180}]},
+    {name:'4R A包（留预120h＋雅托96h）',courses:[{n:'留学预备 1V1',u:450,h:120},{n:'雅思/托福 1V1',u:620,h:96}]},
+    {name:'4R B包（留预60h＋雅托96h）',courses:[{n:'留学预备 1V1',u:450,h:60},{n:'雅思/托福 1V1',u:620,h:96}]},
+    {name:'4R C包（雅托96h）',courses:[{n:'雅思/托福 1V1',u:620,h:96}]},
+    {name:'4R D包（雅托84h）',courses:[{n:'雅思/托福 1V1',u:620,h:84}]},
+    {name:'AP/SAT 加油包 A（60h）',courses:[{n:'AP/SAT 1V1',u:650,h:60}]},
+    {name:'AP/SAT 加油包 B（120h）',courses:[{n:'AP/SAT 1V1',u:650,h:120}]},
+    {name:'AP/SAT 加油包 C（180h）',courses:[{n:'AP/SAT 1V1',u:650,h:180}]},
+    {name:'IB 加油包 A（60h）',courses:[{n:'IB 1V1',u:700,h:60}]},
+    {name:'IB 加油包 B（100h）',courses:[{n:'IB 1V1',u:700,h:100}]},
+    {name:'双G 高阶包 A（GRE班72h＋1V1 42h）',courses:[{n:'GRE班课',u:13800/60,h:72},{n:'GRE/GMAT 1V1',u:650,h:42}]},
+    {name:'双G 高阶包 B（托福班＋GRE班＋1V1）',courses:[{n:'托福B段班课',u:11800/72,h:72},{n:'GRE班课',u:13800/60,h:72},{n:'GRE/GMAT 1V1',u:650,h:60}]},
+    {name:'双G GRE加油包 B（班课42h）',courses:[{n:'GRE班课',u:650,h:42}]},
+    {name:'双G GRE加油包 C（班课60h）',courses:[{n:'GRE班课',u:650,h:60}]},
+    {name:'GRE 标准班（60h）',courses:[{n:'GRE标准班',u:13800/60,h:60}]},
+    {name:'GRE 点睛班（24h）',courses:[{n:'GRE点睛班',u:6000/24,h:24}]},
+    {name:'SAT 高效班（42h）',courses:[{n:'SAT班课',u:13800/42,h:42}]},
+    {name:'SAT 高分VIP A（班课42h＋1V1 30h）',courses:[{n:'SAT班课',u:13800/42,h:42},{n:'SAT 1V1',u:650,h:30}]},
+    {name:'SAT 高分VIP B（班课42h＋1V1 60h）',courses:[{n:'SAT班课',u:13800/42,h:42},{n:'SAT 1V1',u:650,h:60}]},
+    {name:'GPA 培优 A（AP学科1V1 90h）',courses:[{n:'AP/学科 1V1',u:650,h:90}]},
+    {name:'托福班课 B/C段（72h）',courses:[{n:'托福B/C段班课',u:11800/72,h:72}]},
+    {name:'托福班课 D段（24h）',courses:[{n:'托福D段班课',u:3600/24,h:24}]},
+  ],
+  '新航道':[
+    {name:'留学直通车A计划（156h）',courses:[{n:'留学直通车A',u:35800/156,h:156}]},
+    {name:'留学直通车B计划（96h）',courses:[{n:'留学直通车B',u:23800/96,h:96}]},
+    {name:'4R E包（1V1 60h）',courses:[{n:'雅思/托福 1V1',u:30800/60,h:60}]},
+    {name:'4R D包（1V1 84h）',courses:[{n:'雅思/托福 1V1',u:41800/84,h:84}]},
+    {name:'4R C包（1V1 96h）',courses:[{n:'雅思/托福 1V1',u:47800/96,h:96}]},
+    {name:'4R B包（1V1 156h）',courses:[{n:'雅思/托福 1V1',u:69800/156,h:156}]},
+    {name:'4R A包（1V1 216h）',courses:[{n:'雅思/托福 1V1',u:90800/216,h:216}]},
+    {name:'POWER UP 班课（78h）',courses:[{n:'POWER UP班课',u:14000/78,h:78}]},
+    {name:'THINK 班课（72h）',courses:[{n:'THINK班课',u:13000/72,h:72}]},
+    {name:'自然拼读班课（30h）',courses:[{n:'自然拼读班课',u:5400/30,h:30}]},
+    {name:'KET 考冲班（24h）',courses:[{n:'KET班课',u:4300/24,h:24}]},
+    {name:'PET 考冲班（30h）',courses:[{n:'PET班课',u:5400/30,h:30}]},
+    {name:'留学预备班课（60h）',courses:[{n:'留学预备班课',u:10500/60,h:60}]},
+    {name:'雅思B/C段精讲班（60h）',courses:[{n:'雅思B/C段班课',u:12800/60,h:60}]},
+    {name:'雅思D段冲刺班（36h）',courses:[{n:'雅思D段班课',u:6600/36,h:36}]},
+    {name:'雅思双向班（30h）',courses:[{n:'雅思双向班',u:6400/30,h:30}]},
+    {name:'托福B/C段精讲班（72h）',courses:[{n:'托福B/C段班课',u:11800/72,h:72}]},
+    {name:'托福D段冲刺班（24h）',courses:[{n:'托福D段班课',u:3600/24,h:24}]},
+    {name:'四级6人班（40h）',courses:[{n:'四级6人班',u:4980/40,h:40}]},
+    {name:'四级15人班（40h）',courses:[{n:'四级15人班',u:2980/40,h:40}]},
+    {name:'六级6人班（40h）',courses:[{n:'六级6人班',u:4980/40,h:40}]},
+    {name:'剑桥白金·活力（42h）',courses:[{n:'白金工作室·活力',u:27300/42,h:42}]},
+    {name:'剑桥白金·能量（72h）',courses:[{n:'白金工作室·能量',u:46800/72,h:72}]},
+    {name:'剑桥白金·冲刺（102h）',courses:[{n:'白金工作室·冲刺',u:66300/102,h:102}]},
+  ]
+};
+
+const QC={
+  '锦秋':[
+    ['A-Level 1对1',680],['AL 1对2',520],['AL 1对3',460],
+    ['IG 1对1',580],['IG 1对2',500],['IG 1对3',440],['Pre-IG 1对1',580],
+    ['雅思 1对1',620],['雅思 1对2',400],
+    ['留学预备 1对1',450],['留学预备 1对2',300],
+    ['雅思B/C段班课',12800/60,60],['雅思D段班课',6600/36,36],['留学预备班课',10500/60,60],
+  ],
+  '腾飞':[
+    ['托福 1V1',620],
+    ['AP/学科 1V1',650],['AP/学科 1V2',420],
+    ['SAT/SSAT 1V1',650],['SAT/SSAT 1V2',420],
+    ['GRE/GMAT 1V1',650],['GRE/GMAT 1V2',420],
+    ['IB 1V1',700],['IB 1V2',460],
+    ['留学预备 1V1',450],['留学预备 1V2',300],
+    ['托福B/C段班课',11800/72,72],['托福D段班课',3600/24,24],
+    ['GRE班课',13800/60,60],['SAT班课',13800/42,42],
+  ],
+  '新航道':[
+    ['雅思 1对1',620],['雅思 1对2',400],
+    ['托福 1对1',620],['托福 1对2',400],
+    ['AP/学科 1对1',650],['AP/学科 1对2',420],
+    ['GRE/GMAT 1对1',650],['GRE/GMAT 1对2',420],
+    ['IB 1对1',700],['IB 1对2',460],
+    ['留学预备/THINK 1对1',450],['留学预备/THINK 1对2',300],
+    ['小托福 1对1',500],['小托福 1对2',320],
+    ['国际备考 1对1',580],['国际备考 1对2',400],
+    ['四六级 1对1',450],['四六级 1对2',300],['四六级 1对3',200],
+    ['POWER UP班课',14000/78,78],['THINK班课',13000/72,72],
+    ['KET班课',4300/24,24],['PET班课',5400/30,30],['自然拼读班课',5400/30,30],
+    ['留学预备班课',10500/60,60],
+    ['雅思B/C段班课',12800/60,60],['雅思D段班课',6600/36,36],
+    ['托福B/C段班课',11800/72,72],['托福D段班课',3600/24,24],['雅思双向班',6400/30,30],
+  ]
+};
+
+let courses=[], brand='新航道';
+let splitMode=false, unifiedPaid=0, unifiedDisc=0, unifiedDiscM=false;
+
+function setBrand(b,el){
+  brand=b;
+  document.querySelectorAll('.brand-btn').forEach(t=>t.classList.remove('on'));
+  el.classList.add('on');
+  const ps=document.getElementById('pkg-sel');
+  ps.innerHTML='<option value="">— 不选套餐，手动填 —</option>';
+  (P[b]||[]).forEach((p,i)=>{const o=document.createElement('option');o.value=i;o.textContent=p.name;ps.appendChild(o);});
+  const qs=document.getElementById('qs');
+  qs.innerHTML='<option value="">— 快速添加课型 —</option>';
+  (QC[b]||[]).forEach((c,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${c[0]}（${Math.round(c[1])}元/h${c[2]?' · '+c[2]+'h':''}）`;qs.appendChild(o);});
+  courses=[];unifiedPaid=0;unifiedDisc=0;unifiedDiscM=false;
+  document.getElementById('unified-paid').value='';
+  document.getElementById('unified-disc').value='';
+  renderAll();
+}
+
+function loadPreset(){
+  const idx=document.getElementById('pkg-sel').value;
+  if(idx===''){courses=[];renderAll();return;}
+  const p=P[brand][idx];
+  p.courses.forEach(c=>courses.push({n:c.n,u:c.u,h:c.h,paid:0,used:0,discM:false,disc:null}));
+  renderAll();
+}
+
+function quickAdd(){
+  const idx=document.getElementById('qs').value;
+  if(idx==='')return;
+  const c=QC[brand][idx];
+  courses.push({n:c[0],u:c[1],h:c[2]||0,paid:0,used:0,discM:false,disc:null});
+  renderAll();
+}
+
+function addBlank(){courses.push({n:'',u:0,h:0,paid:0,used:0,discM:false,disc:null});renderAll();}
+function delCourse(i){courses.splice(i,1);renderAll();}
+
+function fmt(n){return '¥'+(Math.round(n*100)/100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');}
+function fmtD(d){return (d*10).toFixed(2).replace(/\.?0+$/,'')+'折';}
+
+function calcCourse(c){
+  const orig=c.u*c.h;
+  const paid=c.paid||0;
+  const ad=(orig>0&&paid>0)?paid/orig:1;
+  const disc=c.discM&&c.disc!==null?(+c.disc/100):ad;
+  const consumed=c.u*(c.used||0)*disc;
+  const refund=Math.max(0,paid-consumed);
+  return{orig,ad,disc,consumed,refund};
+}
+
+function renderAll(){
+  // show/hide unified vs split inputs
+  document.getElementById('unified-inputs').style.display=splitMode?'none':'block';
+
+  const el=document.getElementById('courses');
+  if(!courses.length){
+    el.innerHTML='<div class="empty-hint">暂无课程，选套餐或用下方添加</div>';
+    document.getElementById('total-strip').style.display='none';
+    return;
+  }
+
+  if(splitMode){
+    // ── SPLIT MODE: each course has own paid + disc ──
+    el.innerHTML=courses.map((c,i)=>{
+      const ready=c.u>0&&c.h>0&&c.paid>0;
+      const res=ready?calcCourse(c):null;
+      const adPct=res?+(res.ad*100).toFixed(4):0;
+      const discVal=res?(c.discM&&c.disc!==null?c.disc:adPct):'';
+      return `<div class="course-card">
+        <div class="course-top">
+          <input class="course-name-inp" type="text" value="${c.n}" placeholder="课程名称" oninput="courses[${i}].n=this.value">
+          <button class="del-btn" onclick="delCourse(${i})">删除</button>
+        </div>
+        <div class="g3">
+          <div>
+            <label>原价单价（元/h）</label>
+            <input type="number" value="${c.u?+(c.u.toFixed(2)):''}" placeholder="680" min="0" step="0.01" onchange="courses[${i}].u=+this.value;renderAll()">
+            <div class="ref-price">${c.h&&c.u?'原价 '+fmt(c.u*c.h):''}</div>
+          </div>
+          <div>
+            <label>总课时（h）</label>
+            <input type="number" value="${c.h||''}" placeholder="72" min="0" onchange="courses[${i}].h=+this.value;renderAll()">
+          </div>
+          <div>
+            <label>已上课时（h）</label>
+            <input type="number" value="${c.used||''}" placeholder="40" min="0" onchange="courses[${i}].used=+this.value;renderAll()">
+          </div>
+        </div>
+        <div style="margin-top:8px">
+          <label>实收（元）</label>
+          <input type="number" value="${c.paid||''}" placeholder="这门课实收多少" min="0" onchange="courses[${i}].paid=+this.value;courses[${i}].discM=false;courses[${i}].disc=null;renderAll()">
+        </div>
+        ${res?`<div class="disc-inline">
+          <label>消耗折扣</label>
+          <input type="number" value="${discVal}" step="0.1" min="0" max="200" placeholder="如 85" onchange="courses[${i}].disc=+this.value;courses[${i}].discM=true;renderAll()">
+          <span class="tip">实际折扣 ${fmtD(res.ad)}，直接填如 85</span>
+        </div>
+        <div class="course-result">
+          <div class="cr-row"><span class="cr-lbl">消耗金额（${fmtD(res.disc)}）</span><span class="cr-val">${fmt(res.consumed)}</span></div>
+          <div class="cr-refund"><span class="lbl">本课应退</span><span class="val">${fmt(res.refund)}</span></div>
+        </div>`:(c.u>0&&c.h>0?'<div style="font-size:11px;color:var(--muted);margin-top:8px">填入实收后自动计算</div>':'')}
+      </div>`;
+    }).join('');
+
+    const valid=courses.filter(c=>c.u>0&&c.h>0&&c.paid>0);
+    if(valid.length>0){
+      const total=valid.reduce((s,c)=>s+calcCourse(c).refund,0);
+      let sumHtml='';
+      valid.forEach(c=>{
+        const r=calcCourse(c);
+        sumHtml+=`<div class="r-row"><span class="r-lbl">${c.n} 实收</span><span class="r-val">${fmt(c.paid)}</span></div>`;
+        sumHtml+=`<div class="r-row"><span class="r-lbl">${c.n} 消耗${c.used||0}h（${fmtD(r.disc)}）</span><span class="r-val">${fmt(r.consumed)}</span></div>`;
+        sumHtml+=`<div class="r-row"><span class="r-lbl">${c.n} 应退</span><span class="r-val" style="color:var(--terra)">${fmt(r.refund)}</span></div>`;
+        if(valid.length>1) sumHtml+='<div style="height:6px"></div>';
+      });
+      document.getElementById('summary-rows').innerHTML=sumHtml;
+      document.getElementById('total-val').textContent=fmt(total);
+      document.getElementById('total-strip').style.display='block';
+    } else {
+      document.getElementById('total-strip').style.display='none';
+    }
+
+  } else {
+    // ── UNIFIED MODE: one paid, one disc ──
+    el.innerHTML=courses.map((c,i)=>`
+      <div class="course-card">
+        <div class="course-top">
+          <input class="course-name-inp" type="text" value="${c.n}" placeholder="课程名称" oninput="courses[${i}].n=this.value">
+          <button class="del-btn" onclick="delCourse(${i})">删除</button>
+        </div>
+        <div class="g3">
+          <div>
+            <label>原价单价（元/h）</label>
+            <input type="number" value="${c.u?+(c.u.toFixed(2)):''}" placeholder="680" min="0" step="0.01" onchange="courses[${i}].u=+this.value;renderAll()">
+            <div class="ref-price">${c.h&&c.u?'原价 '+fmt(c.u*c.h):''}</div>
+          </div>
+          <div>
+            <label>总课时（h）</label>
+            <input type="number" value="${c.h||''}" placeholder="72" min="0" onchange="courses[${i}].h=+this.value;renderAll()">
+          </div>
+          <div>
+            <label>已上课时（h）</label>
+            <input type="number" value="${c.used||''}" placeholder="40" min="0" onchange="courses[${i}].used=+this.value;renderAll()">
+          </div>
+        </div>
+      </div>`
+    ).join('');
+
+    // unified calc
+    const validC=courses.filter(c=>c.u>0&&c.h>0);
+    const paid=unifiedPaid||0;
+    if(paid>0&&validC.length>0){
+      const origTotal=validC.reduce((s,c)=>s+c.u*c.h,0);
+      const ad=paid/origTotal;
+      const adPct=+(ad*100).toFixed(4);
+      // show disc input area
+      document.getElementById('unified-disc-area').style.display='block';
+      if(!unifiedDiscM) document.getElementById('unified-disc').value=adPct;
+      document.getElementById('unified-disc-tip').textContent=`实际折扣 ${fmtD(ad)}，直接填如 85`;
+      const disc=(unifiedDiscM&&unifiedDisc>0)?(unifiedDisc/100):ad;
+      const totalConsumed=validC.reduce((s,c)=>s+c.u*(c.used||0)*disc,0);
+      const totalRefund=Math.max(0,paid-totalConsumed);
+      let sumHtml='';
+      sumHtml+=`<div class="r-row"><span class="r-lbl">实收总价</span><span class="r-val">${fmt(paid)}</span></div>`;
+      sumHtml+=`<div class="r-row"><span class="r-lbl">原价合计</span><span class="r-val">${fmt(origTotal)}</span></div>`;
+      sumHtml+=`<div class="r-row"><span class="r-lbl">实际折扣（反推）</span><span class="r-val">${fmtD(ad)}</span></div>`;
+      if(validC.length>1){
+        validC.forEach(c=>{
+          const con=c.u*(c.used||0)*disc;
+          sumHtml+=`<div class="r-row"><span class="r-lbl">${c.n} 消耗${c.used||0}h</span><span class="r-val">${fmt(con)}</span></div>`;
+        });
+      }
+      sumHtml+=`<div class="r-row"><span class="r-lbl">消耗金额（${fmtD(disc)}）</span><span class="r-val">${fmt(totalConsumed)}</span></div>`;
+      document.getElementById('summary-rows').innerHTML=sumHtml;
+      document.getElementById('total-val').textContent=fmt(totalRefund);
+      document.getElementById('total-strip').style.display='block';
+    } else {
+      document.getElementById('unified-disc-area').style.display='none';
+      document.getElementById('total-strip').style.display='none';
+    }
+  }
+}
+
+setBrand('新航道',document.querySelector('.brand-btn.on'));
+</script>
+</body>
+</html>

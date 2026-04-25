@@ -1,0 +1,954 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>北美腾飞 · 报价计算器</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root {
+  --navy: #0a1628;
+  --navy2: #0f2040;
+  --blue: #1a56db;
+  --blue-l: #3b82f6;
+  --accent: #f59e0b;
+  --accent2: #10b981;
+  --bg: #f0f4f9;
+  --card: #ffffff;
+  --border: #dde3ef;
+  --text: #0f172a;
+  --muted: #6b7a99;
+  --light: #e8edf8;
+  --danger: #ef4444;
+  --r: 12px;
+  --shadow: 0 2px 12px rgba(10,22,40,.08);
+  --shadow-sel: 0 4px 20px rgba(26,86,219,.18);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { font-family: 'Noto Sans SC', 'PingFang SC', sans-serif; background: #d8e2ef; min-height: 100vh; display: flex; justify-content: center; padding: 24px 0 40px; }
+
+.page-wrap {
+  width: 100%; max-width: 480px;
+  background: var(--bg);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(10,22,40,.18);
+  display: flex; flex-direction: column;
+  /* let it grow naturally, no fixed height */
+}
+
+@media (max-width: 540px) {
+  body { padding: 0; background: var(--bg); }
+  .page-wrap { border-radius: 0; box-shadow: none; }
+}
+
+/* HEADER */
+.hdr {
+  background: linear-gradient(135deg, var(--navy) 0%, var(--navy2) 40%, #1a3a6e 100%);
+  padding: 20px 16px 16px;
+  color: #fff;
+  position: relative;
+  overflow: hidden;
+}
+.hdr::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 80% 50%, rgba(59,130,246,.18) 0%, transparent 60%);
+}
+.hdr-tag {
+  font-size: 10px; letter-spacing: 2.5px; color: rgba(255,255,255,.7);
+  text-transform: uppercase; margin-bottom: 6px; position: relative;
+}
+.hdr h1 {
+  font-size: 20px; font-weight: 900; position: relative; color: #ffffff;
+}
+.hdr-rocket {
+  position: absolute; right: 18px; top: 14px; font-size: 44px; opacity: .12;
+  transform: rotate(-20deg); filter: blur(1px);
+}
+
+/* TABS */
+.tabs-wrap {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--navy);
+  box-shadow: 0 3px 12px rgba(0,0,0,.2);
+}
+@media (min-width: 541px) {
+  /* On desktop, sticky is relative to scroll container (page-wrap uses overflow:auto below) */
+}
+.tabs {
+  display: flex; overflow-x: auto; scrollbar-width: none;
+  padding: 0 4px;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tb {
+  flex-shrink: 0; padding: 12px 14px;
+  background: none; border: none; border-bottom: 2.5px solid transparent;
+  font-size: 12.5px; font-weight: 500; color: rgba(255,255,255,.5);
+  cursor: pointer; white-space: nowrap; transition: all .15s;
+  font-family: inherit;
+}
+.tb.on { color: #fff; border-bottom-color: var(--accent); font-weight: 700; }
+.tb:hover:not(.on) { color: rgba(255,255,255,.8); }
+
+/* CONTENT */
+.pane { display: none; padding: 14px 12px 0; }
+.pane.on { display: block; }
+
+.section-lbl {
+  font-size: 10.5px; font-weight: 700; letter-spacing: 2px; color: var(--muted);
+  text-transform: uppercase; margin: 16px 0 8px 2px;
+}
+.section-lbl:first-child { margin-top: 4px; }
+
+/* CARDS */
+.card {
+  border: 2px solid var(--border); border-radius: var(--r);
+  padding: 12px 14px; margin-bottom: 8px;
+  cursor: pointer; background: var(--card);
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  position: relative; user-select: none;
+}
+.card:hover { border-color: #93c5fd; background: #f7f9ff; }
+.card.sel {
+  border-color: var(--blue); background: #eff6ff;
+  box-shadow: var(--shadow-sel);
+}
+.check-dot {
+  position: absolute; top: 10px; right: 10px;
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--blue); color: #fff;
+  font-size: 11px; font-weight: 900;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; transform: scale(.4);
+  transition: all .2s cubic-bezier(.34,1.56,.64,1);
+}
+.card.sel .check-dot { opacity: 1; transform: scale(1); }
+
+.card-name {
+  font-size: 13.5px; font-weight: 700; color: var(--text);
+  padding-right: 32px; margin-bottom: 4px;
+}
+.card-desc {
+  font-size: 11.5px; color: var(--muted); line-height: 1.6; margin-bottom: 7px;
+}
+.card-price-row {
+  display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap;
+}
+.card-price { font-size: 17px; font-weight: 900; color: var(--blue); }
+.card-orig { font-size: 11.5px; color: #b0b8cc; text-decoration: line-through; }
+.badge {
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 20px;
+  background: #dbeafe; color: #1d4ed8; letter-spacing: .3px;
+}
+.badge.gold { background: #fef3c7; color: #b45309; }
+.badge.green { background: #d1fae5; color: #065f46; }
+
+/* NOTE */
+.note {
+  font-size: 11.5px; color: #4b5d8a; line-height: 1.7;
+  padding: 10px 12px; margin: 4px 0 14px;
+  background: linear-gradient(135deg, #eff6ff, #f0f9ff);
+  border-radius: 8px; border-left: 3px solid var(--blue-l);
+}
+
+/* 1V1 TABLE */
+.oo-header {
+  display: grid; grid-template-columns: 1fr 68px 68px;
+  gap: 6px; padding: 0 0 8px; margin-bottom: 4px;
+  border-bottom: 2px solid var(--light);
+}
+.oo-header span {
+  font-size: 10px; font-weight: 700; color: var(--muted);
+  text-transform: uppercase; letter-spacing: .8px; text-align: center;
+}
+.oo-header span:first-child { text-align: left; }
+.oo-row {
+  display: grid; grid-template-columns: 1fr 68px 68px;
+  gap: 6px; align-items: center; padding: 10px 0;
+  border-bottom: 1px solid var(--light);
+}
+.oo-row:last-child { border-bottom: none; }
+.oo-name { font-size: 12.5px; color: var(--text); font-weight: 600; }
+.oo-rate { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.oo-inp {
+  padding: 7px 4px; border: 2px solid var(--border); border-radius: 8px;
+  font-size: 14px; text-align: center; outline: none; width: 100%;
+  background: var(--card); font-family: inherit; color: var(--text);
+  transition: border-color .12s;
+}
+.oo-inp:focus { border-color: var(--blue); }
+
+/* BOTTOM PANEL */
+.bottom-wrap {
+  background: var(--bg);
+  padding: 0 0 6px;
+  box-shadow: 0 -4px 20px rgba(10,22,40,.08);
+  position: sticky; bottom: 0; z-index: 90;
+}
+
+/* SUMMARY */
+.summary {
+  background: var(--card);
+  margin: 0 12px; border-radius: var(--r) var(--r) 0 0;
+  overflow: hidden;
+  border: 1.5px solid var(--border);
+  border-bottom: none;
+  max-height: 0; transition: max-height .3s ease;
+}
+.summary.has-items { max-height: 260px; overflow-y: auto; }
+.sm-head {
+  font-size: 10px; font-weight: 700; letter-spacing: 2px; color: var(--muted);
+  text-transform: uppercase; padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--light);
+  background: #f8fafd;
+}
+.sm-item {
+  display: flex; justify-content: space-between; align-items: center;
+  font-size: 12px; padding: 8px 14px; border-bottom: 1px dashed var(--light);
+}
+.sm-item:last-child { border-bottom: none; }
+.sm-item-name { color: var(--text); flex: 1; padding-right: 8px; line-height: 1.4; }
+.sm-item-right { display: flex; align-items: center; gap: 6px; }
+.sm-price { font-weight: 700; color: var(--blue); font-size: 13px; white-space: nowrap; }
+.sm-orig { font-size: 11px; color: #b0b8cc; text-decoration: line-through; white-space: nowrap; }
+.rm-btn {
+  background: none; border: none; color: #c4cdd8; font-size: 18px;
+  cursor: pointer; line-height: 1; padding: 0 2px; transition: color .1s;
+}
+.rm-btn:hover { color: var(--danger); }
+
+/* DISCOUNT */
+.disc-row {
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+  padding: 10px 14px 8px;
+  background: var(--card);
+  border-left: 1.5px solid var(--border); border-right: 1.5px solid var(--border);
+  margin: 0 12px;
+}
+.disc-lbl { font-size: 12px; font-weight: 700; color: var(--text); }
+.disc-inp {
+  width: 56px; padding: 5px 4px; border: 2px solid var(--border); border-radius: 8px;
+  font-size: 15px; text-align: center; outline: none; font-family: inherit;
+  transition: border-color .12s;
+}
+.disc-inp:focus { border-color: var(--blue); }
+.disc-unit { font-size: 11.5px; color: var(--muted); }
+.disc-btns { display: flex; gap: 5px; flex-wrap: wrap; padding: 0 14px 10px;
+  background: var(--card);
+  border-left: 1.5px solid var(--border); border-right: 1.5px solid var(--border);
+  margin: 0 12px;
+}
+.disc-btn {
+  padding: 5px 11px; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 6px; font-size: 11.5px; color: var(--muted); cursor: pointer;
+  transition: all .12s; font-family: inherit; font-weight: 600;
+}
+.disc-btn:hover, .disc-btn.on {
+  background: var(--blue); border-color: var(--blue); color: #fff;
+}
+
+/* TOTAL BAR */
+.total-bar {
+  background: linear-gradient(135deg, var(--navy), #1a3a6e);
+  margin: 0 12px;
+  border-radius: 0 0 var(--r) var(--r);
+  padding: 14px 16px;
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 12px;
+}
+.tot-left {}
+.tot-label { font-size: 11px; color: rgba(255,255,255,.5); margin-bottom: 2px; }
+.tot-amount { font-size: 28px; font-weight: 900; color: #fff; letter-spacing: -.5px; }
+.tot-save { font-size: 11px; color: #6ee7b7; margin-top: 2px; }
+.copy-btn {
+  padding: 11px 16px; background: rgba(255,255,255,.12);
+  border: 1.5px solid rgba(255,255,255,.3); border-radius: 9px;
+  color: #fff; font-size: 12px; font-weight: 700; cursor: pointer;
+  white-space: nowrap; transition: all .15s; font-family: inherit;
+  letter-spacing: .3px;
+}
+.copy-btn:hover { background: rgba(255,255,255,.22); }
+.copy-btn.done { background: var(--accent2); border-color: var(--accent2); }
+
+/* SPACER for sticky bottom */
+.scroll-pad { height: 8px; }
+
+/* Animaation for card select */
+@keyframes cardPop {
+  0% { transform: scale(1); }
+  40% { transform: scale(.97); }
+  100% { transform: scale(1); }
+}
+.card.sel { animation: cardPop .15s ease; }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+<div class="hdr">
+  <div class="hdr-rocket">🚀</div>
+  <div class="hdr-tag">新航道成都 · 北美腾飞</div>
+  <h1>报价计算器</h1>
+</div>
+
+<div class="tabs-wrap">
+  <div class="tabs">
+    <button class="tb on" onclick="sw('toefl',this)">托福班课</button>
+    <button class="tb" onclick="sw('r4',this)">4R 定制包</button>
+    <button class="tb" onclick="sw('gre',this)">双G / GRE</button>
+    <button class="tb" onclick="sw('sat',this)">SAT</button>
+    <button class="tb" onclick="sw('combo',this)">综合套餐</button>
+    <button class="tb" onclick="sw('gpa',this)">GPA 培优</button>
+    <button class="tb" onclick="sw('oo',this)">1对1 追加</button>
+  </div>
+</div>
+
+<!-- ====== 托福班课 ====== -->
+<div class="pane on" id="pane-toefl">
+  <div class="section-lbl">可多选 · 叠加报名</div>
+
+  <div class="card" data-id="tf_b" data-name="托福 B段 精讲班" data-price="11800" onclick="toggle(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">托福 B段 精讲班</div>
+    <div class="card-desc">听力＋阅读＋口语＋写作精讲 · 48次 · 72H &nbsp;|&nbsp; 四级480 / 托福能力50-60</div>
+    <div class="card-price-row"><span class="card-price">¥11,800</span></div>
+  </div>
+
+  <div class="card" data-id="tf_c" data-name="托福 C段 强化班" data-price="11800" onclick="toggle(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">托福 C段 强化班</div>
+    <div class="card-desc">听力＋阅读＋口语＋写作强化 · 48次 · 72H &nbsp;|&nbsp; 托福能力70-80</div>
+    <div class="card-price-row"><span class="card-price">¥11,800</span></div>
+  </div>
+
+  <div class="card" data-id="tf_d" data-name="托福 D段 冲刺班" data-price="3600" onclick="toggle(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">托福 D段 冲刺班</div>
+    <div class="card-desc">冲刺听力＋阅读＋口语＋写作 · 16次 · 24H &nbsp;|&nbsp; 托福能力80-90+</div>
+    <div class="card-price-row"><span class="card-price">¥3,600</span></div>
+  </div>
+
+  <div class="note">💡 保分：B段保4.5 | C段保5.0。需报名 ≥2 个阶段方可参与。结课后3个月内官考未达标可重修（1年内有效）。</div>
+</div>
+
+<!-- ====== 4R 定制包 ====== -->
+<div class="pane" id="pane-r4">
+  <div class="section-lbl">选择一个课时包（单选）</div>
+
+  <div class="card" data-id="4r_a" data-name="4R A包" data-price="85800" data-orig="113520" data-fixed="1" data-group="r4" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">4R A 包 &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">216H</span></div>
+    <div class="card-desc">留学预备1V1 120H ＋ 雅思/托福1V1 96H<br>增值：班课一期 ＋ 诊断课 ＋ 9H 补充1V1</div>
+    <div class="card-price-row">
+      <span class="card-price">¥85,800</span>
+      <span class="card-orig">¥113,520</span>
+      <span class="badge">75折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="4r_b" data-name="4R B包" data-price="64900" data-orig="86520" data-fixed="1" data-group="r4" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">4R B 包 &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">156H</span></div>
+    <div class="card-desc">留学预备1V1 60H ＋ 雅思/托福1V1 96H<br>增值：班课一期 ＋ 诊断课 ＋ 6H 补充1V1</div>
+    <div class="card-price-row">
+      <span class="card-price">¥64,900</span>
+      <span class="card-orig">¥86,520</span>
+      <span class="badge">75折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="4r_c" data-name="4R C包" data-price="43800" data-orig="59520" data-fixed="1" data-group="r4" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">4R C 包 &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">96H</span></div>
+    <div class="card-desc">雅思/托福1V1 96H<br>增值：班课一期 ＋ 诊断课 ＋ 3H 补充1V1</div>
+    <div class="card-price-row">
+      <span class="card-price">¥43,800</span>
+      <span class="card-orig">¥59,520</span>
+      <span class="badge">74折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="4r_d" data-name="4R D包" data-price="38800" data-orig="52080" data-fixed="1" data-group="r4" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">4R D 包 &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">84H</span></div>
+    <div class="card-desc">雅思/托福1V1 84H ＋ 语法/语音/词汇录播课</div>
+    <div class="card-price-row">
+      <span class="card-price">¥38,800</span>
+      <span class="card-orig">¥52,080</span>
+      <span class="badge">75折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="4r_e" data-name="4R E包" data-price="28800" data-orig="37200" data-fixed="1" data-group="r4" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">4R E 包 &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">60H</span></div>
+    <div class="card-desc">雅思/托福1V1 60H ＋ 语法/语音/词汇录播课</div>
+    <div class="card-price-row">
+      <span class="card-price">¥28,800</span>
+      <span class="card-orig">¥37,200</span>
+      <span class="badge">77折</span>
+    </div>
+  </div>
+  <div class="scroll-pad"></div>
+</div>
+
+<!-- ====== 双G / GRE ====== -->
+<div class="pane" id="pane-gre">
+  <div class="section-lbl">双G 高阶包（班课 + 1V1）· 单选</div>
+
+  <div class="card" data-id="g_ha" data-name="双G 高阶包 A" data-price="37800" data-orig="41100" data-fixed="1" data-group="g_h" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">双G 高阶包 A &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">114H</span></div>
+    <div class="card-desc">GRE C段强化班课 72H ＋ GRE/GMAT 1V1 42H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥37,800</span>
+      <span class="card-orig">¥41,100</span>
+      <span class="badge">92折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="g_hb" data-name="双G 高阶包 B" data-price="51800" data-orig="71200" data-fixed="1" data-group="g_h" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">双G 高阶包 B &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">228H</span></div>
+    <div class="card-desc">托福B精讲班72H ＋ GRE C强化班72H ＋ 赠托福D冲刺24H ＋ GRE 1V1 60H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥51,800</span>
+      <span class="card-orig">¥71,200</span>
+      <span class="badge">73折</span>
+    </div>
+  </div>
+
+  <div class="section-lbl">GRE 加油包（含1V1课时）· 单选</div>
+
+  <div class="card" data-id="g_jb" data-name="双G GRE加油包 B" data-price="23200" data-orig="27300" data-fixed="1" data-group="g_j" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">双G GRE 加油包 B &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">42H</span></div>
+    <div class="card-desc">阅读/推理18H · 填空/阅读15H · 数学6H · 作文3H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥23,200</span>
+      <span class="card-orig">¥27,300</span>
+      <span class="badge">85折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="g_jc" data-name="双G GRE加油包 C" data-price="31200" data-orig="39000" data-fixed="1" data-group="g_j" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">双G GRE 加油包 C &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">60H</span></div>
+    <div class="card-desc">阅读/推理24H · 填空/阅读21H · 数学9H · 作文6H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥31,200</span>
+      <span class="card-orig">¥39,000</span>
+      <span class="badge">8折</span>
+    </div>
+  </div>
+
+  <div class="section-lbl">GRE 班课单独报名（3-6人）· 单选</div>
+
+  <div class="card" data-id="g_std" data-name="GRE 标准班" data-price="13800" data-group="g_cls" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">GRE 标准班 &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">60H</span></div>
+    <div class="card-desc">阅读/推理24H · 填空/阅读21H · 数学9H · 作文6H</div>
+    <div class="card-price-row"><span class="card-price">¥13,800</span></div>
+  </div>
+
+  <div class="card" data-id="g_pt" data-name="GRE 点睛班" data-price="6000" data-group="g_cls" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">GRE 点睛班 &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">24H</span></div>
+    <div class="card-desc">阅读/逻辑9H · 填空/阅读9H · 数学3H · 作文3H</div>
+    <div class="card-price-row"><span class="card-price">¥6,000</span></div>
+  </div>
+
+  <div class="note">💡 双G课包外单卖1V1享9折优惠</div>
+</div>
+
+<!-- ====== SAT ====== -->
+<div class="pane" id="pane-sat">
+  <div class="section-lbl">选择课程（单选）</div>
+
+  <div class="card" data-id="sat_e" data-name="SAT 高效班" data-price="13800" data-orig="14600" data-fixed="1" data-group="sat" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">SAT 高效班（3-6人）&nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">42H</span></div>
+    <div class="card-desc">阅读18H ＋ 文法18H ＋ 数学6H &nbsp;|&nbsp; 约1个月</div>
+    <div class="card-price-row">
+      <span class="card-price">¥13,800</span>
+      <span class="card-orig">¥14,600</span>
+      <span class="badge gold">优惠 ¥800</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="sat_a" data-name="SAT 高分VIP套餐 A" data-price="29800" data-orig="33300" data-fixed="1" data-group="sat" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">SAT 高分 VIP 套餐 A &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">72H</span></div>
+    <div class="card-desc">班课42H ＋ 1V1 30H &nbsp;|&nbsp; 约2个月 &nbsp;|&nbsp; 适合托福95-100+</div>
+    <div class="card-price-row">
+      <span class="card-price">¥29,800</span>
+      <span class="card-orig">¥33,300</span>
+      <span class="badge">90折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="sat_b" data-name="SAT 高分VIP套餐 B" data-price="44800" data-orig="52800" data-fixed="1" data-group="sat" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">SAT 高分 VIP 套餐 B &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">102H</span></div>
+    <div class="card-desc">班课42H ＋ 1V1 60H &nbsp;|&nbsp; 约3个月 &nbsp;|&nbsp; 适合托福85-90+</div>
+    <div class="card-price-row">
+      <span class="card-price">¥44,800</span>
+      <span class="card-orig">¥52,800</span>
+      <span class="badge">85折</span>
+    </div>
+  </div>
+  <div class="scroll-pad"></div>
+</div>
+
+<!-- ====== 综合套餐 ====== -->
+<div class="pane" id="pane-combo">
+  <div class="section-lbl">腾飞互补计划（语言 + 学科）· 单选</div>
+
+  <div class="card" data-id="cb_a" data-name="腾飞互补计划 A" data-price="54800" data-orig="64140" data-fixed="1" data-group="cb" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">腾飞互补计划 A</div>
+    <div class="card-desc">托福1V1 72H ＋ AP/学科1V1 30H &nbsp;|&nbsp; 托福有基础，需AP查漏补缺</div>
+    <div class="card-price-row">
+      <span class="card-price">¥54,800</span>
+      <span class="card-orig">¥64,140</span>
+      <span class="badge">85折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="cb_b" data-name="腾飞互补计划 B" data-price="68800" data-orig="83640" data-fixed="1" data-group="cb" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">腾飞互补计划 B</div>
+    <div class="card-desc">托福1V1 72H ＋ AP/学科1V1 60H &nbsp;|&nbsp; 托福需强化，AP1门新课</div>
+    <div class="card-price-row">
+      <span class="card-price">¥68,800</span>
+      <span class="card-orig">¥83,640</span>
+      <span class="badge">82折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="cb_c" data-name="腾飞互补计划 C" data-price="95800" data-orig="122640" data-fixed="1" data-group="cb" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">腾飞互补计划 C</div>
+    <div class="card-desc">托福1V1 72H ＋ AP/学科1V1 120H &nbsp;|&nbsp; 托福需学习，AP两门以上</div>
+    <div class="card-price-row">
+      <span class="card-price">¥95,800</span>
+      <span class="card-orig">¥122,640</span>
+      <span class="badge">78折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="cb_d" data-name="腾飞互补计划 D" data-price="133800" data-orig="176520" data-fixed="1" data-group="cb" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">腾飞互补计划 D</div>
+    <div class="card-desc">托福1V1 96H ＋ AP/学科1V1 180H &nbsp;|&nbsp; 语言衔接 ＋ AP多门长线规划</div>
+    <div class="card-price-row">
+      <span class="card-price">¥133,800</span>
+      <span class="card-orig">¥176,520</span>
+      <span class="badge">76折</span>
+    </div>
+  </div>
+
+  <div class="section-lbl">AP / SAT / SSAT 加油包（650元/H）· 单选</div>
+
+  <div class="card" data-id="ap_a" data-name="AP/SAT 加油包 A" data-price="33800" data-orig="39000" data-fixed="1" data-group="ap" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">AP / SAT 加油包 A &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">60H</span></div>
+    <div class="card-desc">单门学习 · 60H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥33,800</span>
+      <span class="card-orig">¥39,000</span>
+      <span class="badge">87折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="ap_b" data-name="AP/SAT 加油包 B" data-price="64800" data-orig="78000" data-fixed="1" data-group="ap" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">AP / SAT 加油包 B &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">120H</span></div>
+    <div class="card-desc">2-3门学习 · 120H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥64,800</span>
+      <span class="card-orig">¥78,000</span>
+      <span class="badge">83折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="ap_c" data-name="AP/SAT 加油包 C" data-price="90800" data-orig="117000" data-fixed="1" data-group="ap" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">AP / SAT 加油包 C &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">180H</span></div>
+    <div class="card-desc">3-4门学习 · 180H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥90,800</span>
+      <span class="card-orig">¥117,000</span>
+      <span class="badge">78折</span>
+    </div>
+  </div>
+
+  <div class="section-lbl">IB 加油包（700元/H）· 单选</div>
+
+  <div class="card" data-id="ib_a" data-name="IB 加油包 A" data-price="36800" data-orig="42000" data-fixed="1" data-group="ib" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">IB 加油包 A &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">60H</span></div>
+    <div class="card-desc">单科课后补充 · 60H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥36,800</span>
+      <span class="card-orig">¥42,000</span>
+      <span class="badge">88折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="ib_b" data-name="IB 加油包 B" data-price="59800" data-orig="70000" data-fixed="1" data-group="ib" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">IB 加油包 B &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">100H</span></div>
+    <div class="card-desc">多科目补充 · 100H</div>
+    <div class="card-price-row">
+      <span class="card-price">¥59,800</span>
+      <span class="card-orig">¥70,000</span>
+      <span class="badge">85折</span>
+    </div>
+  </div>
+
+  <div class="note">💡 互补计划折扣参考：30-60H 9折 · 61-100H 8.8折 · 101-180H 8.5折 · 181H+ 8折</div>
+</div>
+
+<!-- ====== GPA 培优 ====== -->
+<div class="pane" id="pane-gpa">
+  <div class="section-lbl">国际生校内 GPA 提分计划（单选）</div>
+
+  <div class="card" data-id="gpa_a" data-name="GPA 培优 A" data-price="49800" data-orig="58500" data-fixed="1" data-group="gpa" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">GPA 培优 A &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">90H</span></div>
+    <div class="card-desc">AP/学科提升 90H &nbsp;|&nbsp; 仅需补2-3门学科或MAP</div>
+    <div class="card-price-row">
+      <span class="card-price">¥49,800</span>
+      <span class="card-orig">¥58,500</span>
+      <span class="badge">85折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="gpa_c" data-name="GPA 培优 C" data-price="55800" data-orig="66000" data-fixed="1" data-group="gpa" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">GPA 培优 C &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">120H</span></div>
+    <div class="card-desc">基础英语60H ＋ AP/学科60H &nbsp;|&nbsp; 英语基础弱，暂不需托福</div>
+    <div class="card-price-row">
+      <span class="card-price">¥55,800</span>
+      <span class="card-orig">¥66,000</span>
+      <span class="badge">85折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="gpa_d" data-name="GPA 培优 D" data-price="90800" data-orig="110640" data-fixed="1" data-group="gpa" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">GPA 培优 D &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">192H</span></div>
+    <div class="card-desc">基础英语60H ＋ 托福72H ＋ AP/学科60H &nbsp;|&nbsp; 语言弱＋有大考需求</div>
+    <div class="card-price-row">
+      <span class="card-price">¥90,800</span>
+      <span class="card-orig">¥110,640</span>
+      <span class="badge">82折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="gpa_e" data-name="GPA 培优 E" data-price="118000" data-orig="149640" data-fixed="1" data-group="gpa" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">GPA 培优 E &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">252H</span></div>
+    <div class="card-desc">基础英语60H ＋ 托福72H ＋ AP/学科120H &nbsp;|&nbsp; 语言弱＋AP多门</div>
+    <div class="card-price-row">
+      <span class="card-price">¥118,000</span>
+      <span class="card-orig">¥149,640</span>
+      <span class="badge">79折</span>
+    </div>
+  </div>
+
+  <div class="card" data-id="gpa_f" data-name="GPA 培优 F" data-price="145800" data-orig="191520" data-fixed="1" data-group="gpa" onclick="single(this)">
+    <span class="check-dot">✓</span>
+    <div class="card-name">GPA 培优 F &nbsp;<span style="font-size:11px;color:var(--muted);font-weight:400">336H</span></div>
+    <div class="card-desc">基础英语120H ＋ 托福96H ＋ AP/学科120H &nbsp;|&nbsp; 长线规划，全面提升</div>
+    <div class="card-price-row">
+      <span class="card-price">¥145,800</span>
+      <span class="card-orig">¥191,520</span>
+      <span class="badge">76折</span>
+    </div>
+  </div>
+  <div class="scroll-pad"></div>
+</div>
+
+<!-- ====== 1对1 追加 ====== -->
+<div class="pane" id="pane-oo">
+  <div class="section-lbl">填入课时数（H），自动计入合计</div>
+
+  <div class="oo-header">
+    <span>课程类型</span>
+    <span>1V1 H</span>
+    <span>1V2 H</span>
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">小托福衔接 / 考冲</div><div class="oo-rate">¥500 / ¥320 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="小托福1V1" data-rate="500" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="小托福1V2" data-rate="320" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">留学预备 / THINK / KET / PET</div><div class="oo-rate">¥450 / ¥300 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="留学预备1V1" data-rate="450" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="留学预备1V2" data-rate="300" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">托福 1V1</div><div class="oo-rate">¥620 / ¥400 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="托福1V1" data-rate="620" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="托福1V2" data-rate="400" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">北美腾飞托福工作室</div><div class="oo-rate">¥650 / ¥420 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="腾飞工作室1V1" data-rate="650" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="腾飞工作室1V2" data-rate="420" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">美高 / 贝赛思 / 国际备考</div><div class="oo-rate">¥650 / ¥420 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="国际备考1V1" data-rate="650" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="国际备考1V2" data-rate="420" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">AP / Pre-AP 学科</div><div class="oo-rate">¥650 / ¥420 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="AP1V1" data-rate="650" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="AP1V2" data-rate="420" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">SAT / SSAT / ACT / ISEE</div><div class="oo-rate">¥650 / ¥420 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="SAT1V1" data-rate="650" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="SAT1V2" data-rate="420" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">GRE / GMAT</div><div class="oo-rate">¥650 / ¥420 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="GRE1V1" data-rate="650" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="GRE1V2" data-rate="420" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">IB</div><div class="oo-rate">¥700 / ¥460 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="IB1V1" data-rate="700" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="IB1V2" data-rate="460" oninput="onOO(this)">
+  </div>
+
+  <div class="oo-row">
+    <div><div class="oo-name">大学先导课 / 精英伴读</div><div class="oo-rate">¥650 / ¥420 per H</div></div>
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="大学先导1V1" data-rate="650" oninput="onOO(this)">
+    <input class="oo-inp" type="number" min="0" placeholder="H" data-name="大学先导1V2" data-rate="420" oninput="onOO(this)">
+  </div>
+
+  <div class="note">💡 双G课包外单卖1V1享9折优惠</div>
+</div>
+
+<!-- ====== STICKY BOTTOM ====== -->
+<div class="bottom-wrap" id="bottomWrap">
+  <!-- Summary list -->
+  <div class="summary" id="smBox">
+    <div class="sm-head">已选课程</div>
+    <div id="smList"></div>
+  </div>
+
+  <!-- Discount row -->
+  <div class="disc-row">
+    <span class="disc-lbl">折扣</span>
+    <input class="disc-inp" id="discInp" type="number" value="10" min="1" max="10" step="0.1" oninput="onDI(this.value)">
+    <span class="disc-unit">折</span>
+  </div>
+  <div class="disc-btns">
+    <button class="disc-btn on" onclick="setD(10,this)">不打折</button>
+    <button class="disc-btn" onclick="setD(9.5,this)">9.5折</button>
+    <button class="disc-btn" onclick="setD(9,this)">9折</button>
+    <button class="disc-btn" onclick="setD(8.8,this)">8.8折</button>
+    <button class="disc-btn" onclick="setD(8.5,this)">8.5折</button>
+    <button class="disc-btn" onclick="setD(8,this)">8折</button>
+  </div>
+
+  <!-- Total bar -->
+  <div class="total-bar">
+    <div class="tot-left">
+      <div class="tot-label" id="totLabel">合计（未选课程）</div>
+      <div class="tot-amount" id="totAmt">¥0</div>
+      <div class="tot-save" id="totSave"></div>
+    </div>
+    <button class="copy-btn" id="copyBtn" onclick="cp()">📋 复制报价</button>
+  </div>
+</div>
+
+<script>
+const cards = {}, oos = {};
+let disc = 1.0;
+
+function sw(id, btn) {
+  document.querySelectorAll('.pane').forEach(p => p.classList.remove('on'));
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  document.getElementById('pane-' + id).classList.add('on');
+  btn.classList.add('on');
+}
+
+function toggle(el) {
+  const id = el.dataset.id;
+  if (cards[id]) { el.classList.remove('sel'); delete cards[id]; }
+  else { el.classList.add('sel'); addCard(id, el); }
+  render();
+}
+
+function single(el) {
+  const id = el.dataset.id, grp = el.dataset.group;
+  if (grp) {
+    document.querySelectorAll('[data-group="' + grp + '"]').forEach(c => {
+      if (c !== el && c.classList.contains('sel')) {
+        c.classList.remove('sel'); delete cards[c.dataset.id];
+      }
+    });
+  }
+  if (cards[id]) { el.classList.remove('sel'); delete cards[id]; }
+  else { el.classList.add('sel'); addCard(id, el); }
+  render();
+}
+
+function addCard(id, el) {
+  const nameEl = el.querySelector('.card-name');
+  // strip the hours span text
+  const clone = nameEl.cloneNode(true);
+  clone.querySelectorAll('span').forEach(s => s.remove());
+  const name = clone.textContent.trim();
+  cards[id] = {
+    el, name,
+    price: +el.dataset.price,
+    orig: +(el.dataset.orig || el.dataset.price),
+    fixed: el.dataset.fixed === '1'   // 套餐固定价，不参与折扣
+  };
+}
+
+function onOO(inp) {
+  const h = parseFloat(inp.value) || 0;
+  const key = inp.dataset.name, rate = +inp.dataset.rate;
+  if (h > 0) oos[key] = { name: key + ' ' + h + 'H', price: h * rate };
+  else delete oos[key];
+  render();
+}
+
+function setD(v, btn) {
+  disc = v / 10;
+  document.getElementById('discInp').value = v;
+  document.querySelectorAll('.disc-btn').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  render();
+}
+
+function onDI(v) {
+  const n = parseFloat(v);
+  if (isNaN(n) || n <= 0) return;
+  disc = Math.min(Math.max(n, 0.1), 10) / 10;
+  document.querySelectorAll('.disc-btn').forEach(b => b.classList.remove('on'));
+  render();
+}
+
+function fmt(n) { return n.toLocaleString('zh-CN'); }
+
+function removeCard(id) {
+  if (cards[id]) { cards[id].el.classList.remove('sel'); delete cards[id]; render(); }
+}
+
+function removeOO(k) { delete oos[k]; render(); }
+
+function render() {
+  const ci = Object.entries(cards), oi = Object.entries(oos);
+  const smBox = document.getElementById('smBox');
+  const smList = document.getElementById('smList');
+  const hasItems = ci.length > 0 || oi.length > 0;
+
+  if (!hasItems) {
+    smBox.classList.remove('has-items');
+    smList.innerHTML = '';
+    document.getElementById('totLabel').textContent = '合计（未选课程）';
+    document.getElementById('totAmt').textContent = '¥0';
+    document.getElementById('totSave').textContent = '';
+    return;
+  }
+
+  smBox.classList.add('has-items');
+  let html = '';
+  ci.forEach(([id, it]) => {
+    const d = it.fixed ? 1 : disc;
+    const fp = Math.round(it.price * d);
+    const showOrig = it.orig > it.price || (!it.fixed && disc < 1);
+    const origDisp = showOrig ? `<span class="sm-orig">¥${fmt(it.orig)}</span>` : '';
+    const tag = it.fixed ? `<span style="font-size:10px;color:#10b981;font-weight:700;white-space:nowrap">套餐价</span>` : '';
+    html += `<div class="sm-item">
+      <span class="sm-item-name">${it.name}</span>
+      <div class="sm-item-right">
+        ${tag}${origDisp}
+        <span class="sm-price">¥${fmt(fp)}</span>
+        <button class="rm-btn" onclick="removeCard('${id}')">×</button>
+      </div>
+    </div>`;
+  });
+  oi.forEach(([k, it]) => {
+    const fp = Math.round(it.price * disc);
+    html += `<div class="sm-item">
+      <span class="sm-item-name">${it.name}</span>
+      <div class="sm-item-right">
+        <span class="sm-price">¥${fmt(fp)}</span>
+        <button class="rm-btn" onclick="removeOO('${k}')">×</button>
+      </div>
+    </div>`;
+  });
+  smList.innerHTML = html;
+
+  // 套餐固定价不参与折扣，班课/1V1才打折
+  const fixedTotal = ci.filter(([,i]) => i.fixed).reduce((s,[,i]) => s + i.price, 0);
+  const discTotal  = ci.filter(([,i]) => !i.fixed).reduce((s,[,i]) => s + i.price, 0)
+                   + oi.reduce((s,[,i]) => s + i.price, 0);
+  const fin = fixedTotal + Math.round(discTotal * disc);
+
+  // 节省 = 所有orig之和 - 最终价
+  const origTotal = ci.reduce((s,[,i]) => s + i.orig, 0) + oi.reduce((s,[,i]) => s + i.price, 0);
+  const saved = origTotal - fin;
+
+  const hasDisc = !ci.every(([,i]) => i.fixed) && disc !== 1;
+  const dt = disc === 1 ? '合计' : `${+(disc*10).toFixed(1)}折（班课/1V1）`;
+  document.getElementById('totLabel').textContent = dt;
+  document.getElementById('totAmt').textContent = '¥' + fmt(fin);
+  document.getElementById('totSave').textContent = saved > 0 ? `共节省 ¥${fmt(saved)}` : '';
+}
+
+function cp() {
+  const ci = Object.entries(cards), oi = Object.entries(oos);
+  if (!ci.length && !oi.length) return;
+  const fixedTotal = ci.filter(([,i]) => i.fixed).reduce((s,[,i]) => s + i.price, 0);
+  const discTotal  = ci.filter(([,i]) => !i.fixed).reduce((s,[,i]) => s + i.price, 0)
+                   + oi.reduce((s,[,i]) => s + i.price, 0);
+  const fin = fixedTotal + Math.round(discTotal * disc);
+  const dt = disc === 1 ? '原价' : `${+(disc*10).toFixed(1)}折`;
+  let lines = ['【北美腾飞报价单】', '新航道成都 · 北美腾飞', ''];
+  ci.forEach(([, i]) => {
+    const d = i.fixed ? 1 : disc;
+    const fp = Math.round(i.price * d);
+    const tag = i.fixed ? '（套餐价）' : '';
+    lines.push(`${i.name}${tag}：¥${fmt(fp)}`);
+  });
+  oi.forEach(([, i]) => { const fp = Math.round(i.price * disc); lines.push(`${i.name}：¥${fmt(fp)}`); });
+  lines.push('');
+  if (disc !== 1) lines.push(`班课/1V1折扣：${dt}`);
+  lines.push(`合计：¥${fmt(fin)}`);
+  navigator.clipboard.writeText(lines.join('\n')).then(() => {
+    const btn = document.getElementById('copyBtn');
+    btn.textContent = '✓ 已复制';
+    btn.classList.add('done');
+    setTimeout(() => { btn.textContent = '📋 复制报价'; btn.classList.remove('done'); }, 2000);
+  });
+}
+
+render();
+</script>
+</div><!-- /page-wrap -->
+</body>
+</html>

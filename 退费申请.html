@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>退费申请 — 新航道成都学校</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;700&family=Noto+Sans+SC:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --ink:    #1c2e2a;
+    --deep:   #0d3028;
+    --mid:    #1a5c4a;
+    --terra:  #c4573a;
+    --terra-l:#e8896e;
+    --bg:     #f2f7f5;
+    --card:   #ffffff;
+    --muted:  #6b857d;
+    --line:   #c8ddd8;
+    --success:#2e7d62;
+    --err:    #b5352a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg); font-family: 'Noto Sans SC', sans-serif;
+    color: var(--ink); min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; padding: 48px 20px 80px; position: relative; overflow-x: hidden;
+  }
+  body::before {
+    content: ''; position: fixed; top: 0; left: 0; right: 0; height: 300px;
+    background: linear-gradient(150deg, var(--deep) 0%, var(--mid) 100%); z-index: 0;
+  }
+  body::after {
+    content: '退费'; position: fixed; bottom: -30px; left: -20px;
+    font-family: 'Noto Serif SC', serif; font-size: 220px; font-weight: 700;
+    color: rgba(26,92,74,0.04); pointer-events: none; z-index: 0; user-select: none;
+  }
+  .header { position: relative; z-index: 1; text-align: center; margin-bottom: 40px; color: white; }
+  .header .logo-label { font-size: 11px; letter-spacing: 4px; color: var(--terra-l); margin-bottom: 12px; font-weight: 300; }
+  .header h1 { font-family: 'Noto Serif SC', serif; font-size: 32px; font-weight: 700; letter-spacing: 2px; }
+  .header h1 span { color: var(--terra-l); }
+  .header p { margin-top: 10px; font-size: 13px; color: rgba(255,255,255,0.5); letter-spacing: 1px; }
+
+  .card {
+    position: relative; z-index: 1; background: var(--card); border-radius: 16px;
+    width: 100%; max-width: 580px;
+    box-shadow: 0 20px 60px rgba(13,48,40,0.15), 0 4px 16px rgba(0,0,0,0.07); overflow: hidden;
+  }
+  .card-top {
+    background: linear-gradient(135deg, var(--mid) 0%, var(--deep) 100%);
+    padding: 22px 30px; display: flex; align-items: center; gap: 14px;
+  }
+  .card-top .icon {
+    width: 44px; height: 44px; background: rgba(196,87,58,0.25); border-radius: 10px;
+    display: flex; align-items: center; justify-content: center; font-size: 22px; flex-shrink: 0;
+  }
+  .card-top h2 { font-family: 'Noto Serif SC', serif; font-size: 17px; color: white; font-weight: 600; }
+  .card-top p  { font-size: 12px; color: rgba(255,255,255,0.48); margin-top: 3px; }
+  .card-body { padding: 30px 30px 32px; }
+
+  .section-label {
+    font-size: 10px; letter-spacing: 3px; color: var(--muted);
+    margin-bottom: 18px; display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+
+  .field-row { display: grid; gap: 14px; margin-bottom: 16px; }
+  .field-row.col1 { grid-template-columns: 1fr; }
+  .field-row.col2 { grid-template-columns: 1fr 1fr; }
+  .field-row.col3 { grid-template-columns: 1fr 1fr 1fr; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field label {
+    font-size: 11px; font-weight: 500; color: var(--muted);
+    letter-spacing: 0.8px; display: flex; align-items: center; gap: 4px;
+  }
+  .field label .req { color: var(--terra); }
+  .field label .tag-auto {
+    font-size: 10px; background: rgba(46,125,98,0.1); color: var(--success);
+    padding: 1px 7px; border-radius: 10px; letter-spacing: 0;
+  }
+  .field input, .field textarea {
+    border: 1.5px solid var(--line); border-radius: 8px; padding: 10px 13px;
+    font-size: 14px; font-family: 'Noto Sans SC', sans-serif; color: var(--ink);
+    transition: border-color .2s, box-shadow .2s; outline: none; background: #f8fafa; width: 100%;
+  }
+  .field textarea { resize: vertical; min-height: 70px; line-height: 1.7; }
+  .field input:focus, .field textarea:focus {
+    border-color: var(--mid); box-shadow: 0 0 0 3px rgba(26,92,74,0.1); background: white;
+  }
+  .field .errmsg { font-size: 11px; color: var(--err); display: none; }
+  .field.bad .errmsg { display: block; }
+  .field.bad input, .field.bad textarea { border-color: var(--err); box-shadow: 0 0 0 3px rgba(181,53,42,0.08); }
+
+  /* 日期输入组 */
+  .date-group {
+    background: linear-gradient(135deg,rgba(26,92,74,0.04),rgba(196,87,58,0.05));
+    border: 1px solid var(--line); border-left: 3px solid var(--terra);
+    border-radius: 0 8px 8px 0; padding: 16px 18px; margin-bottom: 20px;
+  }
+  .date-group-title {
+    font-size: 11px; color: var(--terra); font-weight: 500; letter-spacing: 1px; margin-bottom: 12px;
+  }
+  .date-group-sub { font-size: 10px; color: var(--muted); font-weight: 400; margin-top: 3px; letter-spacing: 0; }
+  .date-inputs { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .date-unit { display: flex; align-items: center; gap: 5px; }
+  .date-unit label { font-size: 11px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .date-unit input {
+    border: 1.5px solid var(--line); border-radius: 8px; padding: 9px 10px;
+    font-size: 14px; font-family: 'Noto Sans SC', sans-serif; color: var(--ink);
+    background: #f8fafa; outline: none; transition: border-color .2s, box-shadow .2s; text-align: center;
+  }
+  .date-unit input.w-year  { width: 80px; }
+  .date-unit input.w-month { width: 54px; }
+  .date-unit input.w-day   { width: 54px; }
+  .date-unit input:focus { border-color: var(--terra); box-shadow: 0 0 0 3px rgba(196,87,58,0.12); background: white; }
+  .date-unit span { font-size: 13px; color: var(--muted); }
+
+  .hint-bar { font-size: 11px; color: var(--muted); margin-bottom: 10px; line-height: 1.6; }
+  .divider { height: 1px; background: var(--line); margin: 22px 0; }
+
+  .btn-group { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn {
+    width: 100%; padding: 14px 8px; border: none; border-radius: 10px;
+    font-size: 15px; font-family: 'Noto Serif SC', serif; font-weight: 600;
+    letter-spacing: 1px; cursor: pointer; transition: transform .15s, box-shadow .15s;
+  }
+  .btn-word {
+    background: linear-gradient(135deg, var(--mid) 0%, var(--deep) 100%);
+    color: white; box-shadow: 0 4px 14px rgba(13,48,40,0.3);
+  }
+  .btn-word:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(13,48,40,0.4); }
+  .btn-pdf {
+    background: linear-gradient(135deg, var(--terra) 0%, #9e3820 100%);
+    color: white; box-shadow: 0 4px 14px rgba(196,87,58,0.35);
+  }
+  .btn-pdf:hover { transform: translateY(-2px); box-shadow: 0 8px 22px rgba(196,87,58,0.45); }
+  .btn:active { transform: translateY(0); }
+  .btn:disabled { opacity: .6; cursor: default; transform: none; }
+
+  .toast {
+    position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px);
+    background: var(--deep); color: white; padding: 13px 22px; border-radius: 10px;
+    font-size: 14px; display: flex; align-items: center; gap: 10px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.22);
+    transition: transform .4s cubic-bezier(.34,1.56,.64,1), opacity .4s;
+    opacity: 0; z-index: 999; white-space: nowrap; max-width: 92vw;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+  .toast .chk {
+    width: 22px; height: 22px; background: var(--success); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0;
+  }
+  .footer { position: relative; z-index: 1; margin-top: 32px; font-size: 12px; color: rgba(0,0,0,0.28); letter-spacing: 2px; }
+
+  /* ── PDF 离屏渲染区 ─────────────────────────────────────
+     宽度 794px = A4 @ 96dpi；字体、行距、缩进严格对照图一
+  ─────────────────────────────────────────────────────── */
+  #pdf-render {
+    position: fixed; left: -9999px; top: 0; z-index: -1;
+    width: 794px; background: #fff; padding: 72px 90px;
+    font-family: 'Noto Sans SC', 'SimSun', '宋体', sans-serif;
+    font-size: 19px; line-height: 2.2; color: #111;   /* 四号 14pt = 19px @96dpi */
+  }
+  #pdf-render .pt {
+    text-align: center; font-weight: bold; font-size: 24px;  /* 小二 18pt = 24px @96dpi */
+    letter-spacing: 3px; margin-bottom: 16px;
+  }
+  /* 正文首行缩进段落 */
+  #pdf-render .pb { text-indent: 2em; word-break: break-all; }
+  /* 下划线值 */
+  #pdf-render .v  { text-decoration: underline; }
+  /* 签字/日期行：从约 55% 处开始，右侧留约 45% 供手写签字 */
+  #pdf-render .sig { padding-left: 55%; }
+  /* 银行信息缩进行（无下划线） */
+  #pdf-render .ind { padding-left: 2em; }
+  /* 间距辅助 */
+  #pdf-render .sp  { margin-bottom: 18px; }
+  #pdf-render .sp2 { margin-bottom: 48px; }
+
+  /* ── 可选附加说明区域 ───────────────────────────────── */
+  .opt-note {
+    background: rgba(196,87,58,0.05);
+    border: 1px dashed rgba(196,87,58,0.45);
+    border-radius: 10px; padding: 14px 16px; margin-bottom: 16px;
+  }
+  .opt-note-header {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 0;
+  }
+  .opt-note-title { font-size: 12px; color: var(--terra); font-weight: 500; letter-spacing: 0.5px; }
+  .opt-note-sub   { font-size: 10px; color: var(--muted); margin-left: auto; }
+  /* 开关 */
+  .sw { position: relative; width: 38px; height: 21px; flex-shrink: 0; }
+  .sw input { opacity: 0; width: 0; height: 0; }
+  .sw-track {
+    position: absolute; inset: 0; background: #c8ddd8;
+    border-radius: 21px; cursor: pointer; transition: background .25s;
+  }
+  .sw-track::before {
+    content: ''; position: absolute; width: 15px; height: 15px;
+    left: 3px; top: 3px; background: white; border-radius: 50%;
+    transition: transform .25s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+  }
+  .sw input:checked ~ .sw-track { background: var(--terra); }
+  .sw input:checked ~ .sw-track::before { transform: translateX(17px); }
+  /* 文本框 */
+  .opt-note-body { margin-top: 12px; }
+  .opt-note-body textarea {
+    border: 1.5px solid var(--line); border-radius: 8px; padding: 9px 12px;
+    font-size: 13px; font-family: 'Noto Sans SC', sans-serif; color: var(--ink);
+    background: #f8fafa; outline: none; width: 100%; resize: vertical; min-height: 52px;
+    transition: border-color .2s, box-shadow .2s;
+  }
+  .opt-note-body textarea:focus  { border-color: var(--terra); box-shadow: 0 0 0 3px rgba(196,87,58,0.12); background: white; }
+  .opt-note-body textarea:disabled { opacity: 0.38; cursor: not-allowed; }
+  .opt-note-tip { font-size: 10px; color: var(--muted); margin-top: 5px; line-height: 1.5; }
+
+  @media (max-width: 480px) {
+    .card-body { padding: 22px 18px 26px; }
+    .field-row.col2, .field-row.col3 { grid-template-columns: 1fr; }
+    .btn-group { grid-template-columns: 1fr; }
+    .header h1 { font-size: 26px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo-label">新航道成都学校 · XHD CHENGDU</div>
+  <h1>退费 <span>申请</span></h1>
+  <p>请填写以下信息，选择生成 Word 或 PDF 文件</p>
+</div>
+
+<div class="card">
+  <div class="card-top">
+    <div class="icon">📋</div>
+    <div>
+      <h2>退费信息填写</h2>
+      <p>所有标 * 项均为必填，请认真核对后再生成</p>
+    </div>
+  </div>
+
+  <div class="card-body">
+
+    <div class="section-label">第一部分 · 收据遗失证明</div>
+
+    <div class="field-row col1">
+      <div class="field" id="f-name">
+        <label>学员姓名 <span class="req">*</span></label>
+        <input type="text" id="iName" placeholder="请输入学员真实姓名">
+        <span class="errmsg">请填写姓名</span>
+      </div>
+    </div>
+
+    <p class="hint-bar">✏️ 以下报名日期需手动回忆填写（文件开头「于__年__月__日报名」），不会自动填充</p>
+    <div class="field-row col3">
+      <div class="field" id="f-ey">
+        <label>报名年份 <span class="req">*</span></label>
+        <input type="number" id="iEY" placeholder="如 2024" min="2000" max="2035">
+        <span class="errmsg">请填写</span>
+      </div>
+      <div class="field" id="f-em">
+        <label>报名月份 <span class="req">*</span></label>
+        <input type="number" id="iEM" placeholder="1-12" min="1" max="12">
+        <span class="errmsg">请填写</span>
+      </div>
+      <div class="field" id="f-ed">
+        <label>报名日期 <span class="req">*</span></label>
+        <input type="number" id="iED" placeholder="1-31" min="1" max="31">
+        <span class="errmsg">请填写</span>
+      </div>
+    </div>
+
+    <div class="field-row col1">
+      <div class="field" id="f-course">
+        <label>课程名称 <span class="req">*</span></label>
+        <input type="text" id="iCourse" placeholder="如：雅思VIP一对一、托福班课等">
+        <span class="errmsg">请填写课程名称</span>
+      </div>
+    </div>
+
+    <div class="field-row col2" style="margin-bottom:22px">
+      <div class="field" id="f-amount">
+        <label>课程金额（元）<span class="req">*</span></label>
+        <input type="number" id="iAmount" placeholder="如：15800" min="0">
+        <span class="errmsg">请填写金额</span>
+      </div>
+      <div class="field" id="f-amountcn">
+        <label>金额大写 <span class="req">*</span> <span class="tag-auto">自动转换</span></label>
+        <input type="text" id="iAmountCN" placeholder="填写金额后自动生成">
+        <span class="errmsg">请确认</span>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="section-label">第二部分 · 退费申请</div>
+
+    <!-- 可编辑日期组 -->
+    <div class="date-group">
+      <div class="date-group-title">
+        📅 申请日期（默认今天，可以修改）
+        <div class="date-group-sub">↓ 此日期会同步填入三处：①证明末尾日期 ②申请开头日期 ③申请时间</div>
+      </div>
+      <div class="date-inputs">
+        <div class="date-unit">
+          <label>年</label>
+          <input type="number" class="w-year" id="dYear" min="2020" max="2040">
+          <span>年</span>
+        </div>
+        <div class="date-unit">
+          <label>月</label>
+          <input type="number" class="w-month" id="dMonth" min="1" max="12">
+          <span>月</span>
+        </div>
+        <div class="date-unit">
+          <label>日</label>
+          <input type="number" class="w-day" id="dDay" min="1" max="31">
+          <span>日</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="field-row col1">
+      <div class="field" id="f-refund">
+        <label>退费金额（元）<span class="req">*</span></label>
+        <input type="number" id="iRefund" placeholder="如：5000" min="0">
+        <span class="errmsg">请填写退费金额</span>
+      </div>
+    </div>
+
+    <div class="field-row col1">
+      <div class="field" id="f-reason">
+        <label>退费原因 <span class="req">*</span></label>
+        <textarea id="iReason" placeholder="请简要说明退费原因，如：出国计划取消、时间冲突等"></textarea>
+        <span class="errmsg">请填写退费原因</span>
+      </div>
+    </div>
+
+    <!-- 可选附加说明（紧接「的账户。」之后，不加下划线） -->
+    <div class="opt-note">
+      <div class="opt-note-header">
+        <label class="sw">
+          <input type="checkbox" id="noteOn" checked onchange="toggleNote(this)">
+          <span class="sw-track"></span>
+        </label>
+        <span class="opt-note-title">📌 附加说明（可选，不加下划线）</span>
+        <span class="opt-note-sub">关闭则不生成</span>
+      </div>
+      <div class="opt-note-body" id="noteBody">
+        <textarea id="iNote" rows="2">家长拒不提供身份证和银行卡照片。</textarea>
+        <div class="opt-note-tip">↑ 此内容会紧接在「…的账户。」之后显示，不带下划线，可修改文字</div>
+      </div>
+    </div>
+
+    <div class="field-row col1">
+      <div class="field" id="f-holder">
+        <label>收款户名 <span class="req">*</span></label>
+        <input type="text" id="iHolder" placeholder="银行账户的户主姓名">
+        <span class="errmsg">请填写户名</span>
+      </div>
+    </div>
+
+    <div class="field-row col1">
+      <div class="field" id="f-card">
+        <label>银行卡号 <span class="req">*</span></label>
+        <input type="text" id="iCard" placeholder="请输入完整银行卡号" inputmode="numeric">
+        <span class="errmsg">请填写银行卡号</span>
+      </div>
+    </div>
+
+    <div class="field-row col1" style="margin-bottom:26px">
+      <div class="field" id="f-bank">
+        <label>开户行 <span class="req">*</span></label>
+        <input type="text" id="iBank" placeholder="如：中国工商银行成都高新支行">
+        <span class="errmsg">请填写开户行名称</span>
+      </div>
+    </div>
+
+    <div class="btn-group">
+      <button class="btn btn-word" id="btn-word" onclick="generateWord()">📄 生成 Word 文件</button>
+      <button class="btn btn-pdf"  id="btn-pdf"  onclick="generatePDF()">🖨 一键生成 PDF</button>
+    </div>
+
+  </div>
+</div>
+
+<div class="footer">© 新航道成都学校 · 退费申请系统</div>
+<div class="toast" id="toast"><div class="chk">✓</div><span id="tmsg"></span></div>
+<div id="pdf-render"></div>
+
+<script>
+// ══════════════════════════════════════════════════════════
+//  初始化日期（预填今天，用户可改）
+// ══════════════════════════════════════════════════════════
+const _NOW = new Date();
+document.getElementById('dYear').value  = _NOW.getFullYear();
+document.getElementById('dMonth').value = _NOW.getMonth() + 1;
+document.getElementById('dDay').value   = _NOW.getDate();
+
+function getDate() {
+  const y = String(document.getElementById('dYear').value  || _NOW.getFullYear());
+  const m = String(document.getElementById('dMonth').value || (_NOW.getMonth()+1));
+  const d = String(document.getElementById('dDay').value   || _NOW.getDate());
+  return { y, m, d, padM: m.padStart(2,'0'), padD: d.padStart(2,'0') };
+}
+
+// ══════════════════════════════════════════════════════════
+//  金额转大写
+// ══════════════════════════════════════════════════════════
+function numToChinese(numStr) {
+  const n = parseFloat(numStr);
+  if (isNaN(n) || n < 0) return '';
+  const digits = ['零','壹','贰','叁','肆','伍','陆','柒','捌','玖'];
+  const units  = ['','拾','佰','仟'];
+  function section(s) {
+    s = String(s).padStart(4,'0');
+    let r = '', zero = false;
+    for (let i = 0; i < 4; i++) {
+      const dv = parseInt(s[i]);
+      if (dv===0) { zero=true; }
+      else { if (zero&&r) r+='零'; r+=digits[dv]+units[3-i]; zero=false; }
+    }
+    return r;
+  }
+  const [intStr, decStr] = n.toFixed(2).split('.');
+  const intNum = parseInt(intStr);
+  let result = '';
+  if (intNum===0) { result='零'; }
+  else {
+    const yi  = Math.floor(intNum/100000000);
+    const wan = Math.floor((intNum%100000000)/10000);
+    const ge  = intNum%10000;
+    if (yi >0) result+=section(yi)+'亿';
+    if (wan>0) { if(yi>0&&wan<1000) result+='零'; result+=section(wan)+'万'; }
+    if (ge >0) { if((yi>0||wan>0)&&ge<1000) result+='零'; result+=section(ge); }
+  }
+  result+='元';
+  const d1=parseInt(decStr[0]), d2=parseInt(decStr[1]);
+  if (d1===0&&d2===0) result+='整';
+  else if (d1===0)    result+='零'+digits[d2]+'分';
+  else if (d2===0)    result+=digits[d1]+'角整';
+  else                result+=digits[d1]+'角'+digits[d2]+'分';
+  return result;
+}
+document.getElementById('iAmount').addEventListener('input', function() {
+  document.getElementById('iAmountCN').value = numToChinese(this.value);
+});
+
+// ══════════════════════════════════════════════════════════
+//  Toast 提示
+// ══════════════════════════════════════════════════════════
+function toast(msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('tmsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ══════════════════════════════════════════════════════════
+//  表单校验
+// ══════════════════════════════════════════════════════════
+function chk(id, fid) {
+  const v = document.getElementById(id).value.trim();
+  document.getElementById(fid).classList.toggle('bad', !v);
+  return !!v;
+}
+function validate() {
+  let ok = true;
+  [['iName','f-name'],['iEY','f-ey'],['iEM','f-em'],['iED','f-ed'],
+   ['iCourse','f-course'],['iAmount','f-amount'],['iAmountCN','f-amountcn'],
+   ['iRefund','f-refund'],['iReason','f-reason'],
+   ['iHolder','f-holder'],['iCard','f-card'],['iBank','f-bank']
+  ].forEach(([id,fid]) => { if (!chk(id,fid)) ok=false; });
+  return ok;
+}
+document.querySelectorAll('input,textarea').forEach(el => {
+  el.addEventListener('input', () => { const p=el.closest('.field'); if(p) p.classList.remove('bad'); });
+});
+
+// 附加说明开关
+function toggleNote(cb) {
+  const ta   = document.getElementById('iNote');
+  const body = document.getElementById('noteBody');
+  ta.disabled       = !cb.checked;
+  body.style.opacity = cb.checked ? '1' : '0.4';
+}
+
+function getData() {
+  const noteOn = document.getElementById('noteOn').checked;
+  const noteVal = document.getElementById('iNote').value.trim();
+  return {
+    name:     document.getElementById('iName').value.trim(),
+    ey:       document.getElementById('iEY').value.trim(),
+    em:       document.getElementById('iEM').value.trim(),
+    ed:       document.getElementById('iED').value.trim(),
+    course:   document.getElementById('iCourse').value.trim(),
+    amount:   document.getElementById('iAmount').value.trim(),
+    amountCN: document.getElementById('iAmountCN').value.trim(),
+    refund:   document.getElementById('iRefund').value.trim(),
+    reason:   document.getElementById('iReason').value.trim(),
+    holder:   document.getElementById('iHolder').value.trim(),
+    card:     document.getElementById('iCard').value.trim(),
+    bank:     document.getElementById('iBank').value.trim(),
+    // 附加说明：开关开且有内容则取值，否则空字符串
+    note:     (noteOn && noteVal) ? noteVal : '',
+  };
+}
+
+// ══════════════════════════════════════════════════════════
+//  Word 生成
+//  严格对照图一：首行缩进正文、签字行居中偏右留白、下划线值、银行信息缩进无下划线
+// ══════════════════════════════════════════════════════════
+async function generateWord() {
+  if (!validate()) { toast('❗ 请填写所有必填项'); return; }
+  const d  = getData();
+  const dt = getDate();
+  const btn = document.getElementById('btn-word');
+  btn.disabled = true; btn.textContent = '⏳ 生成中…';
+
+  try {
+
+    // ─── XML 辅助函数 ────────────────────────────────────
+
+    // XML 特殊字符转义
+    const xe = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+    // 字体大小（Word 用半磅；四号=14pt=28，小二=18pt=36）
+    const S   = 28;    // 四号 14pt — 正文
+    const T   = 36;    // 小二 18pt — 标题
+    // 行距（twips，360 = 1.5倍行距）
+    const LN  = 360;
+    // 首行缩进（480 twips ≈ 2个中文字符宽度，四号字下）
+    const IND = 480;
+    // 签字行左缩进：A4内容宽8504 twips，5000≈59%处开始，右侧留41%供手写
+    // （5800太靠右会导致日期换行；4500偏左；5000是平衡点）
+    const SIG = 5000;
+
+    /**
+     * 构建一个 <w:r> run 元素
+     * @param {string} text   - 文本内容
+     * @param {boolean} uline - 是否加下划线
+     * @param {number}  sz    - 字号（半磅）
+     * @param {boolean} bold  - 是否加粗
+     */
+    function wr(text, uline, sz, bold) {
+      if (text === null || text === undefined || String(text) === '') return '';
+      const s    = String(text);
+      const sz_  = sz   || S;
+      // 含空格的文本必须加 xml:space="preserve" 否则 Word 会吃掉空格
+      const pres = s.includes(' ') ? ' xml:space="preserve"' : '';
+      let rpr = `<w:rPr><w:rFonts w:ascii="SimSun" w:hAnsi="SimSun" w:hint="eastAsia"/>`;
+      if (bold)  rpr += '<w:b/><w:bCs/>';
+      if (uline) rpr += '<w:u w:val="single"/>';
+      rpr += `<w:sz w:val="${sz_}"/><w:szCs w:val="${sz_}"/></w:rPr>`;
+      return `<w:r>${rpr}<w:t${pres}>${xe(s)}</w:t></w:r>`;
+    }
+
+    // 快捷：普通文本（四号14pt）
+    const n  = t => wr(t, false, S, false);
+    // 快捷：下划线文本（填入值，四号）
+    const u  = t => wr(t, true,  S, false);
+    // 快捷：加粗文本（四号）
+    const bl = t => wr(t, false, S, true);
+
+    /**
+     * 构建一个 <w:p> 段落
+     * @param {string|string[]} runs - 纯文本字符串，或 wr() 拼好的 run XML 数组
+     * @param {object} o  - 段落选项
+     *   o.sz    - 字号（默认 S=24）
+     *   o.bold  - 文本字符串时是否加粗
+     *   o.center- 居中对齐
+     *   o.ln    - 行距（默认 LN=360）
+     *   o.b4    - 段前间距 twips
+     *   o.af    - 段后间距 twips
+     *   o.indL  - 左缩进 twips（全行）
+     *   o.indF  - 首行额外缩进 twips
+     */
+    function para(runs, o) {
+      o = o || {};
+      const sz  = o.sz  || S;
+      const ln  = o.ln  || LN;
+      const b4  = o.b4  || 0;
+      const af  = o.af  || 0;
+      const iL  = o.indL || 0;
+      const iF  = o.indF || 0;
+
+      let spc = `<w:spacing w:line="${ln}" w:lineRule="auto"`;
+      if (b4||af) spc += ` w:before="${b4}" w:after="${af}"`;
+      spc += '/>';
+
+      const jc  = o.center ? '<w:jc w:val="center"/>' : '';
+      const ind = (iL||iF) ? `<w:ind${iL?` w:left="${iL}"`:''}${iF?` w:firstLine="${iF}"`:''}/>`:'';
+      const ppr = `<w:pPr>${spc}${jc}${ind}</w:pPr>`;
+
+      let r = '';
+      if (!runs && runs !== '0') {
+        // 空段落
+      } else if (typeof runs === 'string') {
+        // 纯文本，包装成 run（尊重 bold/sz 选项）
+        r = wr(runs, false, sz, o.bold);
+      } else if (Array.isArray(runs)) {
+        // 已经是 run XML 数组，直接拼接
+        r = runs.filter(Boolean).join('');
+      }
+      return `<w:p>${ppr}${r}</w:p>`;
+    }
+
+    // ─── 文档内容 ────────────────────────────────────────
+    // 严格还原图一：
+    //   · 正文段落首行缩进（w:firstLine=480），换行回左边距
+    //   · 签字/日期行：左缩进 SIG（页面右半段），右侧留白供手写
+    //   · 户名/银行卡号/开户行：左缩进 IND（与正文首行对齐），无下划线
+    //   · 填入的所有值（姓名/日期/课程/金额/退费/原因/账户）加单下划线
+
+    const docContent = [
+
+      // ════════ 收据遗失证明 ════════
+      para('收据遗失证明', {sz:T, ln:LN, center:true, bold:true, af:180}),
+
+      // 正文（首行缩进，值下划线）
+      para([
+        n('姓名：'), u(d.name),
+        n(' 于 '), u(d.ey), n('年'), u(d.em), n('月'), u(d.ed),
+        n('日 报名了新航道（成都）的'), u(d.course),
+        n('课程，金额：共计'), u(d.amount),
+        n('元，大写：'), u(d.amountCN),
+        n('。因本人保管不善，导致合同和收据丢失，特此说明。')
+      ], {ln:LN, indF:IND, af:180}),
+
+      para(null, {ln:100}), // 小空行（相当于图一的空行）
+
+      // 日期行：右半段落位，紧凑写年月日（无多余空格）
+      para([n('日期：'), u(dt.y), n('年'), u(dt.m), n('月'), u(dt.d), n('日')],
+        {ln:LN, indL:SIG}),
+
+      // 本人签字：右半段落位，右侧自然留白
+      para('本人签字：', {ln:LN, indL:SIG, af:0}),
+
+      // ════════ 退费申请 ════════
+      // b4=1080 = 3 × LN(360) = 3行空白距离
+      para('退费申请', {sz:T, ln:LN, center:true, bold:true, b4:1080, af:180}),
+
+      // 正文（首行缩进，值下划线）
+      para([
+        n('本人于'), u(dt.y), n('年'), u(dt.m), n('月'), u(dt.d),
+        n('日向新航道提出退费申请，退费金额为：'), u(d.refund),
+        n('元，退费原因为：'), u(d.reason),
+        n('，此费用退到账户：'), u(d.holder), n('的账户。'),
+        // 附加说明：有内容则追加，不带下划线
+        ...(d.note ? [n(d.note)] : [])
+      ], {ln:LN, indF:IND, af:120}),
+
+      // 银行信息：左缩进与正文首行对齐，无下划线
+      para([n('户名：'),     n(d.holder)], {ln:LN, indL:IND, af:80}),
+      para([n('银行卡号：'), n(d.card)  ], {ln:LN, indL:IND, af:80}),
+      para([n('开户行：'),   n(d.bank)  ], {ln:LN, indL:IND, af:200}),
+
+      para('特此申请！', {ln:LN, indL:IND, af:500}),
+
+      // 申请人签字：加粗，右半段落位，留白
+      para([bl('申请人签字：')], {ln:LN, indL:SIG, af:140}),
+
+      // 申请时间：同位，紧凑年月日
+      para([n('申请时间：'), u(dt.y), n('年'), u(dt.m), n('月'), u(dt.d), n('日')],
+        {ln:LN, indL:SIG}),
+
+    ].join('\n');
+
+    // ─── 组装 DOCX ──────────────────────────────────────
+    const docXml = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<w:document xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"
+            xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">
+<w:body>
+${docContent}
+<w:sectPr>
+  <w:pgSz w:w="11906" w:h="16838"/>
+  <w:pgMar w:top="1701" w:right="1701" w:bottom="1701" w:left="1701"
+           w:header="851" w:footer="992" w:gutter="0"/>
+</w:sectPr>
+</w:body>
+</w:document>`;
+
+    const ct = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
+  <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
+  <Default Extension="xml" ContentType="application/xml"/>
+  <Override PartName="/word/document.xml"
+    ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/>
+</Types>`;
+
+    const rootRel = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  <Relationship Id="rId1"
+    Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument"
+    Target="word/document.xml"/>
+</Relationships>`;
+
+    const wordRel = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"/>`;
+
+    const zip = new JSZip();
+    zip.file('[Content_Types].xml', ct);
+    zip.folder('_rels').file('.rels', rootRel);
+    const wf = zip.folder('word');
+    wf.file('document.xml', docXml);
+    wf.folder('_rels').file('document.xml.rels', wordRel);
+
+    const blob = await zip.generateAsync({
+      type:'blob',
+      mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = '退费申请_' + d.name + '_' + dt.y + dt.padM + dt.padD + '.docx';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast('✅ Word 已下载：' + d.name + ' 的退费申请');
+  } catch(e) {
+    toast('❌ 生成失败：' + e.message);
+  } finally {
+    btn.disabled = false; btn.textContent = '📄 生成 Word 文件';
+  }
+}
+
+// ══════════════════════════════════════════════════════════
+//  PDF 生成（html2canvas → jsPDF）
+//  同样遵循图一格式：下划线值、银行信息缩进无下划线、签字行留白
+// ══════════════════════════════════════════════════════════
+async function generatePDF() {
+  if (!validate()) { toast('❗ 请填写所有必填项'); return; }
+  const d  = getData();
+  const dt = getDate();
+  const btn = document.getElementById('btn-pdf');
+  btn.disabled = true; btn.textContent = '⏳ 渲染中…';
+
+  try {
+    // v(text) 生成带下划线的 span
+    const v = t => `<span class="v">${t}</span>`;
+
+    const render = document.getElementById('pdf-render');
+    render.innerHTML = `
+      <div class="pt">收据遗失证明</div>
+
+      <div class="pb sp">姓名：${v(d.name)} 于 ${v(d.ey)}年${v(d.em)}月${v(d.ed)}日 报名了新航道（成都）的${v(d.course)}课程，金额：共计${v(d.amount)}元，大写：${v(d.amountCN)}。因本人保管不善，导致合同和收据丢失，特此说明。</div>
+
+      <div class="sig">日期：${v(dt.y)}年${v(dt.m)}月${v(dt.d)}日</div>
+      <div class="sig sp2">本人签字：</div>
+
+      <div class="pt">退费申请</div>
+
+      <div class="pb sp">本人于${v(dt.y)}年${v(dt.m)}月${v(dt.d)}日向新航道提出退费申请，退费金额为：${v(d.refund)}元，退费原因为：${v(d.reason)}，此费用退到账户：${v(d.holder)}的账户。${d.note ? d.note : ''}</div>
+
+      <div class="ind">户名：${d.holder}</div>
+      <div class="ind sp">银行卡号：${d.card}</div>
+      <div class="ind sp">开户行：${d.bank}</div>
+      <div class="ind sp2">特此申请！</div>
+
+      <div class="sig"><strong>申请人签字：</strong></div>
+      <div class="sig">申请时间：${v(dt.y)}年${v(dt.m)}月${v(dt.d)}日</div>
+    `;
+
+    await document.fonts.ready;
+    await new Promise(r => setTimeout(r, 500));
+
+    const canvas = await html2canvas(render, {
+      scale: 2.5, useCORS: true, backgroundColor: '#ffffff', logging: false
+    });
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pageW = 210, pageH = 297;
+    const imgH  = (canvas.height / canvas.width) * pageW;
+
+    if (imgH <= pageH) {
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pageW, imgH);
+    } else {
+      const pxPerMm = canvas.width / pageW;
+      const pageHpx = pageH * pxPerMm;
+      let oy = 0, pg = 0;
+      while (oy < canvas.height) {
+        const sh = Math.min(pageHpx, canvas.height - oy);
+        const sl = document.createElement('canvas');
+        sl.width = canvas.width; sl.height = sh;
+        sl.getContext('2d').drawImage(canvas, 0, oy, canvas.width, sh, 0, 0, canvas.width, sh);
+        if (pg > 0) pdf.addPage();
+        pdf.addImage(sl.toDataURL('image/png'), 'PNG', 0, 0, pageW, sh / pxPerMm);
+        oy += pageHpx; pg++;
+      }
+    }
+
+    pdf.save('退费申请_' + d.name + '_' + dt.y + dt.padM + dt.padD + '.pdf');
+    toast('✅ PDF 已下载：' + d.name + ' 的退费申请');
+  } catch(e) {
+    console.error(e);
+    toast('❌ 生成失败：' + e.message);
+  } finally {
+    document.getElementById('pdf-render').innerHTML = '';
+    btn.disabled = false; btn.textContent = '🖨 一键生成 PDF';
+  }
+}
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && e.target.tagName !== 'TEXTAREA') generateWord();
+});
+</script>
+</body>
+</html>

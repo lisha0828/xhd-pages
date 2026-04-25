@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>积分兑换申领 — 新航道成都学校</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { 
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; 
+    background: #f5f5f5; 
+    min-height: 100vh; 
+    padding: 24px 16px 60px; 
+  }
+  .card { 
+    max-width: 600px; 
+    margin: 0 auto; 
+    background: #fff; 
+    border-radius: 16px; 
+    box-shadow: 0 2px 20px rgba(0,0,0,0.08); 
+    overflow: hidden; 
+  }
+  .header { 
+    background: linear-gradient(135deg, #ff9a44, #fc6076); 
+    color: #fff; 
+    padding: 28px 24px 20px; 
+    text-align: center; 
+  }
+  .header h1 { font-size: 20px; font-weight: 700; margin-bottom: 6px; }
+  .header p { font-size: 13px; opacity: 0.85; margin-bottom: 0; }
+
+  /* ── 注意事项页 ── */
+  .notice-section { margin-bottom: 18px; }
+  .notice-rule-title {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 8px;
+  }
+  .notice-rule-title .num {
+    background: linear-gradient(135deg, #ff9a44, #fc6076);
+    color: #fff;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+  .notice-rule-content {
+    font-size: 14px;
+    line-height: 1.8;
+    color: #555;
+    padding-left: 30px;
+  }
+  .notice-rule-content li {
+    list-style: none;
+    margin-bottom: 3px;
+  }
+  .notice-rule-content li::before {
+    content: "· ";
+    color: #fc6076;
+    font-weight: 700;
+  }
+  .remark-box {
+    background: #fff8f0;
+    border-left: 3px solid #ff9a44;
+    border-radius: 0 8px 8px 0;
+    padding: 12px 14px;
+    margin-top: 4px;
+  }
+  .remark-box .remark-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #e65100;
+    margin-bottom: 6px;
+  }
+  .remark-box p {
+    font-size: 13.5px;
+    line-height: 1.75;
+    color: #555;
+  }
+  .confirm-btn { 
+    width: 100%; 
+    padding: 14px; 
+    background: linear-gradient(135deg, #ff9a44, #fc6076); 
+    color: white; 
+    border: none; 
+    border-radius: 8px; 
+    font-size: 16px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    margin-top: 20px; 
+    transition: opacity 0.2s;
+  }
+  .confirm-btn:active { opacity: 0.85; }
+
+  /* ── 表单页 ── */
+  #formPage { display: none; }
+  .body { padding: 24px; }
+  .field { margin-bottom: 16px; }
+  label { 
+    display: block; 
+    font-size: 16px; 
+    color: #555; 
+    margin-bottom: 8px; 
+    font-weight: 700; 
+  }
+  label .req { color: #e53935; margin-left: 2px; }
+  input, textarea { 
+    width: 100%; 
+    padding: 12px 14px; 
+    border: 1px solid #ddd; 
+    border-radius: 8px; 
+    font-size: 15px; 
+    font-family: inherit; 
+    color: #333; 
+    background: #fafafa; 
+    transition: all 0.3s; 
+    line-height: 1.5;
+  }
+  input:focus, textarea:focus { 
+    border-color: #fc6076; 
+    background: #fff; 
+    outline: none; 
+    box-shadow: 0 0 0 3px rgba(252,96,118,0.1); 
+  }
+  ::placeholder { color: #aaa; font-weight: 400; }
+  .submit-btn { 
+    width: 100%; 
+    padding: 14px; 
+    background: linear-gradient(135deg, #ff9a44, #fc6076); 
+    color: white; 
+    border: none; 
+    border-radius: 8px; 
+    font-size: 16px; 
+    font-weight: 600; 
+    cursor: pointer; 
+    margin-top: 10px; 
+    transition: opacity 0.2s;
+  }
+  .submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+  .tip { font-size: 12px; color: #aaa; margin-top: 6px; }
+
+  /* ── Toast ── */
+  #toast { 
+    position: fixed; top: 20px; left: 50%; transform: translateX(-50%); 
+    padding: 12px 24px; border-radius: 8px; color: white; display: none; 
+    z-index: 9999; font-size: 14px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+    white-space: nowrap;
+  }
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- ══════════ 注意事项页 ══════════ -->
+<div class="card" id="noticePage">
+  <div class="header">
+    <h1>🎁 积分换礼领取规则</h1>
+    <p>填写申请前，请仔细阅读以下规则</p>
+  </div>
+  <div class="body">
+
+    <div class="notice-section">
+      <div class="notice-rule-title"><span class="num">1</span>领取方式</div>
+      <div class="notice-rule-content">
+        <ul>
+          <li><strong>现场领取：</strong>请前往新航道成都学校八宝校区进行领取。</li>
+          <li><strong>线上领取：</strong>仅限京东e卡，需通过指定线上渠道核实。</li>
+          <li><strong>到付邮寄：</strong>顺丰快递到付邮寄，需通过指定线上渠道核实。</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="notice-section">
+      <div class="notice-rule-title"><span class="num">2</span>领取要求</div>
+      <div class="notice-rule-content">
+        领取时，学生本人需提供有效身份证件；若由亲属代领，则需同时提供学生本人及代领亲属的有效身份证件，经工作人员核实无误后方可领取。
+      </div>
+    </div>
+
+    <div class="notice-section">
+      <div class="notice-rule-title"><span class="num">3</span>领取时限</div>
+      <div class="notice-rule-content">
+        自行政通知领取日期起，领取时限为 <strong>3个月</strong>。逾期未领取视为自动放弃该礼品。
+      </div>
+    </div>
+
+    <div class="remark-box">
+      <div class="remark-label">⚠️ 退费说明</div>
+      <p>若学员发生退费情况：<br>
+      · 续费学员：先扣除该礼品金额后再进行退费处理。<br>
+      · 推荐学员：扣除相应积分后再进行礼品兑换。</p>
+    </div>
+
+    <button class="confirm-btn" onclick="showForm()">我已知晓，开始填写申请 →</button>
+  </div>
+</div>
+
+<!-- ══════════ 填写表单页 ══════════ -->
+<div class="card" id="formPage">
+  <div class="header">
+    <h1>🎁 积分兑换申领表</h1>
+    <p>New Channel International Education Group</p>
+  </div>
+  <div class="body" id="formBody">
+    <div class="field">
+      <label>您的姓名<span class="req">*</span></label>
+      <input type="text" id="winnerName" placeholder="请输入您的真实姓名">
+    </div>
+    <div class="field">
+      <label>您的联系电话<span class="req">*</span></label>
+      <input type="tel" id="winnerPhone" placeholder="请输入手机号码">
+    </div>
+    <div class="field">
+      <label>兑换礼品名称<span class="req">*</span></label>
+      <input type="text" id="giftName" placeholder="如：京东E卡">
+    </div>
+    <div class="field">
+      <label>兑换礼品数量<span class="req">*</span></label>
+      <input type="text" id="giftNum" placeholder="如：10张">
+      <div class="tip">如对金额/张数有要求，请在备注里说明</div>
+    </div>
+    <div class="field">
+      <label>备注（选填）</label>
+      <textarea id="remarks" rows="3" placeholder="礼品颜色要求、特殊情况等"></textarea>
+    </div>
+    <button class="submit-btn" id="submitBtn" onclick="handleSubmit()">确认并提交申请</button>
+  </div>
+</div>
+
+<script>
+  const NOTIFICATION_WEBHOOK = 'https://xhd.feishu.cn/base/automation/webhook/event/FHRbalPH5wHuevh5hvncqAGXn8e';
+  const INTERNAL_PAGE_BASE   = 'https://xhd-pages.netlify.app/jifen-internal.html';
+
+  function showForm() {
+    document.getElementById('noticePage').style.display = 'none';
+    document.getElementById('formPage').style.display   = 'block';
+    window.scrollTo(0, 0);
+  }
+
+  async function handleSubmit() {
+    const name    = document.getElementById('winnerName').value.trim();
+    const phone   = document.getElementById('winnerPhone').value.trim();
+    const gift    = document.getElementById('giftName').value.trim();
+    const num     = document.getElementById('giftNum').value.trim();
+    const remarks = document.getElementById('remarks').value.trim();
+
+    if (!name || !phone || !gift || !num) {
+      showToast('❌ 请填写所有带 * 的必填项', '#c0392b'); return;
+    }
+    if (!/^1[3-9]\d{9}$/.test(phone)) {
+      showToast('❌ 手机号格式不正确', '#c0392b'); return;
+    }
+
+    const btn = document.getElementById('submitBtn');
+    btn.disabled = true;
+    btn.textContent = '提交中...';
+
+    const today = new Date().toISOString().split('T')[0];
+
+    const customerData = {
+      申请日期: today,
+      获得人: name,
+      获得人电话: phone,
+      兑换礼品名称: gift,
+      兑换礼品数量: num,
+      备注: remarks
+    };
+
+    const jsonStr = JSON.stringify(customerData);
+    const b64Data = btoa(encodeURIComponent(jsonStr).replace(/%([0-9A-F]{2})/g, function(match, p1) {
+        return String.fromCharCode('0x' + p1);
+    }));
+    const internalURL = INTERNAL_PAGE_BASE + '#' + b64Data;
+
+    const notifyPayload = {
+      获得人: name,
+      补填链接: internalURL
+    };
+
+    try {
+      await fetch(NOTIFICATION_WEBHOOK, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(notifyPayload)
+      });
+
+      showToast('✅ 提交成功！', '#2e7d62');
+      document.getElementById('formBody').style.opacity = '0.5';
+      document.getElementById('formBody').style.pointerEvents = 'none';
+      btn.textContent = '✅ 已提交（刷新页面可重新填写）';
+
+    } catch (err) {
+      showToast('❌ 网络异常，请检查网络后重试', '#c0392b');
+      btn.disabled = false;
+      btn.textContent = '确认并提交申请';
+    }
+  }
+
+  function showToast(msg, color) {
+    const t = document.getElementById('toast');
+    t.textContent = msg; t.style.background = color; t.style.display = 'block';
+    setTimeout(() => { t.style.display = 'none'; }, 3000);
+  }
+</script>
+</body>
+</html>
